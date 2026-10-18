@@ -68,6 +68,16 @@ void main() {
             .revision,
         0,
       );
+      await tester.tap(find.text('Discard edits'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('callingAe')))
+            .controller!
+            .text,
+        'DIMSE_DASH',
+      );
+      expect(find.textContaining('1–16 ASCII'), findsNothing);
       await enterText('callingAe', 'TEST_CLIENT');
       await enterText('listenPort', '11113');
       await tester.tap(find.text('Configure a remote PACS'));
@@ -80,6 +90,12 @@ void main() {
       }.entries) {
         await enterText(entry.key, entry.value);
       }
+      final appearance = find.byType(DropdownButtonFormField<Appearance>);
+      await tester.ensureVisible(appearance);
+      await tester.tap(appearance);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('light').last);
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Apply connection'));
       await tester.tap(find.text('Apply connection'));
       await tester.pumpAndSettle();
@@ -102,11 +118,23 @@ void main() {
             .map((w) => w.data)
             .join(' | '),
       );
+      expect(
+        tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
+        ThemeMode.light,
+      );
+      await tester.tap(find.text('Reveal values'));
+      await tester.pumpAndSettle();
+      expect(find.text('Mask values'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await runtime!.close();
       await launch();
       expect(runtime!.initial.client.callingAe, 'TEST_CLIENT');
       expect(runtime!.initial.client.listenPort, 11113);
+      expect(runtime!.initial.client.appearance, Appearance.light);
+      expect(
+        tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
+        ThemeMode.light,
+      );
       expect(runtime!.initial.node!.host, '192.0.2.1');
       expect(runtime!.initial.node!.calledAe, 'PACS_AET');
       expect(runtime!.initial.node!.port, 104);

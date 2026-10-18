@@ -49,8 +49,9 @@ unchanged.
 
 ## Evidence — 2026-10-19
 
-The initial implementation is recorded in `fdaf6d4`. Results below are local
-evidence; no hosted CI success or signed/installed distribution is claimed.
+The initial implementation is recorded in `fdaf6d4`. Initial results below are
+local evidence; subsequent hosted evidence is recorded separately. No signed or
+installed distribution is claimed.
 The publication gate reran `just dry` successfully: 43 tests, static checks,
 secret/advisory scans and a macOS release build.
 
@@ -60,7 +61,7 @@ secret/advisory scans and a macOS release build.
 | macOS 15.7.7 arm64, Xcode 16.4 | Debug and release builds; automated UI → SQLite → runtime reopen passes | Development bundle, no notarized DMG |
 | Ubuntu 24.04 amd64 isolated container | Analysis, architecture, core/storage/widget tests and release build pass; Xvfb GTK integration flow passes | No stock GNOME desktop, Wayland session or package installation |
 | macOS release smoke inspection | Idle shell, Settings and validation feedback visibly render; clean relaunch restores unsaved defaults | Automation of native field replacement was inconclusive; no claim of a completed real-keyboard save/process-restart round-trip |
-| Local quality checks | Formatting, analysis, positive/negative architecture checks, design lint, hooks and secret scan pass | CI workflow is authored but has not run on GitHub |
+| Local quality checks | Formatting, analysis, positive/negative architecture checks, design lint, hooks and secret scan pass | Initial publication check; superseded hosted result recorded below |
 | Dependency advisory check | Pub reports 114 package records with no current advisory/retraction failures | Time-bound registry result; does not audit Git source |
 
 Raw local logs and the release screenshot are in the ignored
@@ -70,14 +71,16 @@ The disposable Linux test environment was removed after collecting its results.
 
 The final sidebar scrolling/minimum-window refinement has a local widget regression
 check. The Linux build/integration result predates that presentation-only refinement;
-repeat the final tree's native checks during desktop acceptance.
+repeat the final tree's native checks during desktop acceptance. Hosted Ubuntu
+CI now verifies the refactored tree's dry checks and release build, not its GUI.
 
 ## Outstanding S0 acceptance
 
-1. On macOS 15 arm64, use real keyboard input to configure, Apply, quit the entire
+1. **Pending; deferred for now on 2026-10-19.** On macOS 15 arm64, use real keyboard input to configure, Apply, quit the entire
    release process and relaunch. Verify all five fields, Discard, theme persistence,
    reset reveal state and idle receiver. Repeat invalid input and narrow-window use.
-2. On stock Ubuntu Desktop 24.04 amd64, repeat the same workflow in **both Wayland
+2. **Pending; skipped for now by decision on 2026-10-19.** On stock Ubuntu Desktop
+   24.04 amd64, repeat the same workflow in **both Wayland
    and Xorg** sessions. Include focus, keyboard shortcuts, close/relaunch and rendering.
 3. Record the source revision for each remaining native acceptance run. Do not
    mark S0 complete from a container result or a successful compile alone.
@@ -85,3 +88,35 @@ repeat the final tree's native checks during desktop acceptance.
 Current-stable macOS release qualification, signed/notarized DMG, DEB install/upgrade/
 remove and the complete DIMSE workflow remain S8 obligations. A later native OS test
 cannot be inferred from the macOS 15 result.
+
+## Acceptance continuation — 2026-10-19
+
+Base revision for this verification: `da80283`, with the native-test extensions
+described below. Remaining native desktop acceptance is deferred for now
+(2026-10-19).
+The tracker was reconciled against the implementation, committed refactoring
+evidence and current hosted results.
+
+- [Hosted dry gate](https://github.com/Lightbridge-KS/dimsedash/actions/runs/39158194863)
+  passes on macOS 15 and Ubuntu 24.04 at `da80283`, including regenerated-source
+  parity. These runners do not perform interactive desktop acceptance.
+- Fresh local `just dry` passes all 52 tests, format/analysis, architecture/design,
+  secrets/advisory checks and a macOS release build.
+- The rebuilt release app launches on macOS 15.7.7 arm64, renders Settings and
+  quits through Command-Q (process exit observed), then relaunches with reveal
+  state reset and receiver stopped. No accepted save occurred in that attempt,
+  so it does not establish saved-field persistence across an app process restart.
+- Native automation produced inconsistent field selection/insertion and differences
+  between accessibility text and visible Flutter fields. Consequently the real
+  keyboard save/restart scenario remains inconclusive, not passed or diagnosed as
+  a product defect. Unsaved test edits were abandoned on quit.
+- Stock Ubuntu 24.04 GNOME Wayland/Xorg acceptance is explicitly pending and
+  skipped for now. This changes scheduling, not the approved support baseline.
+
+This continuation extends the native integration scenario with invalid-draft
+Discard, saved appearance and a deliberate reveal before runtime recreation, so
+the reset assertion verifies an actual state transition. Synthetic input and
+runtime recreation still do not prove physical keyboard or OS process restart.
+The expanded `just native-test` passes on macOS 15.7.7 arm64; subsequent
+`just analyze` passes with no issues. The known foregrounding warning remains.
+Raw continuation logs live in ignored `_playground/2026-10-19_s0-acceptance/outputs/`.

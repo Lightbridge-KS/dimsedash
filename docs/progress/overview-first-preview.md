@@ -18,7 +18,7 @@ This is the durable implementation plan and status record. Architecture remains 
 
 **Now:** the S0–S8 sequence and Study Root-only preview scope are approved (2026-10-19). The platform/distribution baseline is approved (2026-10-19). The updated Settings design is approved (2026-10-19), including editable calling/called AE titles, PACS IP/port, client listening port and `DIMSE_DASH` as the default local AE. S0 implementation is authorized and in progress; no later slice is active.
 
-**Active:** S0 — shell, persistent Settings, failure handling and executable gates are implemented. Automated UI/SQLite checks pass on macOS and Ubuntu 24.04 under Xvfb. Next: real-keyboard/process-restart acceptance and stock Ubuntu GNOME Wayland/Xorg verification. See [S0 evidence/runbook](../tests/s0-configuration.md). S1 then makes Echo the first real network tracer bullet; Echo alone is not a public-preview release.
+**Active:** S0 — shell, persistent Settings, failure handling and executable gates are implemented. Automated UI/SQLite checks pass on macOS and Ubuntu 24.04 under Xvfb. Remaining native acceptance is pending and deferred for now (2026-10-19): real-keyboard/process-restart acceptance on macOS and stock Ubuntu 24.04 GNOME Wayland/Xorg acceptance. The support baseline is unchanged. See [S0 evidence/runbook](../tests/s0-configuration.md). S1 then makes Echo the first real network tracer bullet; Echo alone is not a public-preview release.
 
 **Preview finish line:** configure → Find → select one study/series/instance → review exact Identifier → C-GET or C-MOVE → receive/save → inspect headers and a supported thumbnail → inspect/export truthful evidence. The complete workflow must run in packaged macOS and Linux apps with failure, retention and restart behavior verified.
 
@@ -214,7 +214,7 @@ When work lands upstream, record issue/PR, release or commit pin, contract tests
 
 | Slice | Landed revision | Dry evidence | Live evidence | Native macOS / Linux | Acceptance |
 |---|---|---|---|---|---|
-| S0 | `fdaf6d4` | Local gates pass; CI definition not yet run remotely | No DIMSE work in scope | macOS automated native flow + release smoke / Ubuntu 24.04 Xvfb flow; GNOME acceptance pending | In progress — [evidence and remaining checks](../tests/s0-configuration.md) |
+| S0 | `fdaf6d4`; refactor `15dba15`, native harness `b8dee94` | 52 local dry tests pass; hosted macOS 15 and Ubuntu 24.04 dry jobs pass at `da80283` | No DIMSE work in scope | macOS automated native flow + release smoke / Ubuntu 24.04 Xvfb flow; GNOME acceptance pending | In progress — [evidence and remaining checks](../tests/s0-configuration.md) |
 | S1 | — | Not run | Not run | Not run / Not run | Pending |
 | S2 | — | Not run | Not run | Not run / Not run | Pending |
 | S3 | — | Not run | Not run | Not run / Not run | Pending |
@@ -275,5 +275,23 @@ The [PRD later-scope table](../req/dimsedash-prd.md#10-preserved-later-scope) re
 | 0.1 | 2026-10-19 | Record approved Settings design and propose S0–S8 with upstream dependencies, per-slice exits and a pending evidence ledger |
 | 0.2 | 2026-10-19 | Record slice-plan and Study Root scope approval; propose macOS/Ubuntu support and distribution baselines for review |
 | 0.3 | 2026-10-19 | Settle platform/distribution baselines and start S0; native Linux baseline verification remains distinct from container checks |
-
 | 0.4 | 2026-10-19 | Implement S0 configuration slice and gates; record macOS and Ubuntu 24.04 automated evidence separately from pending native desktop acceptance |
+
+## S0 acceptance continuation — 2026-10-19
+
+Reconciled the local tracker rollback with the committed implementation and
+refactoring evidence at `da80283`. Restored completed S0 implementation items and
+the settled platform decision; native acceptance remains open. The remaining
+macOS and Ubuntu desktop acceptance checks are deferred for now (2026-10-19).
+
+[Hosted dry gate](https://github.com/Lightbridge-KS/dimsedash/actions/runs/39158194863)
+now passes on both macOS 15 and Ubuntu 24.04 at `da80283`, including generated
+source parity. A fresh local `just dry` also passes (52 tests and release build).
+Ubuntu 24.04 GNOME acceptance is explicitly skipped for this continuation and
+remains pending; no container or CI result substitutes for it.
+
+The native test now also verifies invalid-draft Discard, appearance persistence
+and reveal reset after reveal was enabled. The expanded `just native-test` and
+subsequent analysis pass on macOS. Native UI automation could not reliably
+complete real keyboard save/restart, so that acceptance remains inconclusive.
+No product behavior was changed. See the [continuation evidence](../tests/s0-configuration.md#acceptance-continuation--2026-10-19).
