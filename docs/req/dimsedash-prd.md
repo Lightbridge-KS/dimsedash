@@ -13,7 +13,7 @@ read_when:
 | Status | PRD draft for review; explicitly confirmed decisions are listed below |
 | Date | 2026-10-18 |
 | Product | Cross-platform Flutter desktop workbench for testing and diagnosing DICOM DIMSE communication |
-| Ownership / license | Planned repository `Lightbridge-KS/dimsedash`; MIT |
+| Ownership / license | Repository `Lightbridge-KS/dimsedash`; MIT |
 | First public preview | Find → Move/Get → receive → inspect headers and basic thumbnails, on macOS and Linux |
 | Evidence baseline | `dartdicom` `v0.1.0-dev.1`, commit `7f9a80d3a257a6936011250ce3e701b47b717385`; source review, not new application verification |
 

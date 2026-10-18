@@ -34,8 +34,10 @@ injected test values. Real keyboard behavior therefore remains a separate check.
 
 ## Evidence — 2026-10-19
 
-All results are local, uncommitted implementation evidence. No hosted CI run or
-signed/installed distribution is claimed.
+The initial implementation is recorded in `fdaf6d4`. Results below are local
+evidence; no hosted CI success or signed/installed distribution is claimed.
+The publication gate reran `just dry` successfully: 43 tests, static checks,
+secret/advisory scans and a macOS release build.
 
 | Environment/check | Result | Limit |
 |---|---|---|
@@ -62,8 +64,8 @@ repeat the final tree's native checks during desktop acceptance.
    reset reveal state and idle receiver. Repeat invalid input and narrow-window use.
 2. On stock Ubuntu Desktop 24.04 amd64, repeat the same workflow in **both Wayland
    and Xorg** sessions. Include focus, keyboard shortcuts, close/relaunch and rendering.
-3. Record the tested source revision once committed. Do not mark S0 complete from
-   a container result or a successful compile alone.
+3. Record the source revision for each remaining native acceptance run. Do not
+   mark S0 complete from a container result or a successful compile alone.
 
 Current-stable macOS release qualification, signed/notarized DMG, DEB install/upgrade/
 remove and the complete DIMSE workflow remain S8 obligations. A later native OS test

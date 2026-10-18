@@ -12,7 +12,7 @@ read_when:
 >
 > Inputs: [PRD](../req/dimsedash-prd.md) · [System](../design/01-system-architecture.md) · [Data](../design/02-data-architecture.md) · [Surface](../design/03-surface-architecture.md) · [Codebase blueprint](../structure/01-codebase-blueprint.md)
 
-This is the durable implementation plan and status record. Architecture remains in the linked documents. Checkboxes below mean implemented and verified, not merely designed. At tracker creation there was no application or executable gate. S0 now has a scaffold, dependency lock, persistent Settings, architecture checks and local verification; the evidence ledger distinguishes these from remaining native acceptance. No implementation commit or published release exists. Writing this plan does not authorize publishing a release or claim upstream changes have landed.
+This is the durable implementation plan and status record. Architecture remains in the linked documents. Checkboxes below mean implemented and verified, not merely designed. At tracker creation there was no application or executable gate. S0 now has a scaffold, dependency lock, persistent Settings, architecture checks and local verification; the evidence ledger distinguishes these from remaining native acceptance. Initial implementation is recorded in `fdaf6d4`; no published release exists. Writing this plan does not authorize publishing a release or claim upstream changes have landed.
 
 ## Now / Next
 
@@ -214,7 +214,7 @@ When work lands upstream, record issue/PR, release or commit pin, contract tests
 
 | Slice | Landed revision | Dry evidence | Live evidence | Native macOS / Linux | Acceptance |
 |---|---|---|---|---|---|
-| S0 | Uncommitted | Local gates pass; CI definition not yet run remotely | No DIMSE work in scope | macOS automated native flow + release smoke / Ubuntu 24.04 Xvfb flow; GNOME acceptance pending | In progress — [evidence and remaining checks](../tests/s0-configuration.md) |
+| S0 | `fdaf6d4` | Local gates pass; CI definition not yet run remotely | No DIMSE work in scope | macOS automated native flow + release smoke / Ubuntu 24.04 Xvfb flow; GNOME acceptance pending | In progress — [evidence and remaining checks](../tests/s0-configuration.md) |
 | S1 | — | Not run | Not run | Not run / Not run | Pending |
 | S2 | — | Not run | Not run | Not run / Not run | Pending |
 | S3 | — | Not run | Not run | Not run / Not run | Pending |
