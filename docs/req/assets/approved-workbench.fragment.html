@@ -1,0 +1,174 @@
+<style>
+#dd-study{--dd-bg:light-dark(#f9f9ff,#111318);--dd-panel:light-dark(#ffffff,#191c20);--dd-low:light-dark(#f3f3fa,#1d2024);--dd-text:light-dark(#191c20,#e2e2e9);--dd-muted:light-dark(#44474e,#c4c6d0);--dd-line:light-dark(#c4c6d0,#44474e);--dd-primary:light-dark(#415f91,#aac7ff);--dd-on:light-dark(#ffffff,#0a305f);--dd-soft:light-dark(#d6e3ff,#284777);--dd-soft-text:light-dark(#284777,#d6e3ff);--dd-danger:light-dark(#93000a,#ffb4ab);--dd-warn:light-dark(#704b00,#f3ca80);--dd-warn-bg:light-dark(#fff3d7,#332b1a);--dd-success:light-dark(#245d43,#9dd6b7);color:var(--dd-text);font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow-wrap:anywhere}
+#dd-study *{box-sizing:border-box}
+#dd-study .dd-window{background:var(--dd-bg);border:1px solid var(--dd-line);border-radius:12px;overflow:hidden}
+#dd-study button,#dd-study select{font:inherit;color:var(--dd-text);background:var(--dd-panel);border:1px solid var(--dd-line);border-radius:7px;padding:7px 11px;min-height:34px}
+#dd-study button:focus-visible,#dd-study select:focus-visible{outline:2px solid var(--dd-primary);outline-offset:3px}
+#dd-study button:hover{background:var(--dd-low)}
+#dd-study button[aria-pressed=true]{background:var(--dd-soft);color:var(--dd-soft-text);border-color:var(--dd-soft)}
+#dd-study button.dd-primary{background:var(--dd-primary);color:var(--dd-on);border-color:var(--dd-primary)}
+#dd-study .dd-head{display:flex;align-items:center;gap:14px;padding:16px 105px 16px 18px;border-bottom:1px solid var(--dd-line);flex-wrap:wrap}
+#dd-study .dd-brand{font-weight:600;font-size:18px;letter-spacing:-.5px;display:flex;align-items:center;gap:9px}
+#dd-study .dd-brand i{color:var(--dd-primary)}
+#dd-study .dd-caption{font-size:12px;color:var(--dd-muted)}
+#dd-study .dd-badge{font-size:12px;padding:3px 8px;border-radius:5px;background:var(--dd-soft);color:var(--dd-soft-text)}
+#dd-study .dd-layout{display:grid;grid-template-columns:180px minmax(0,1fr)}
+#dd-study aside{background:var(--dd-low);padding:18px 12px;border-right:1px solid var(--dd-line)}
+#dd-study .dd-label{font-size:11px;letter-spacing:1.1px;text-transform:uppercase;color:var(--dd-muted);margin:0 0 9px}
+#dd-study .dd-node{background:var(--dd-soft);color:var(--dd-soft-text);padding:10px;border-radius:7px;margin-bottom:24px}
+#dd-study .dd-node small{display:block;margin-top:3px}
+#dd-study .dd-history{display:grid;gap:8px;color:var(--dd-muted);font-size:12px;margin-bottom:26px}
+#dd-study .dd-history span{display:block}
+#dd-study .dd-listener{border-top:1px solid var(--dd-line);padding-top:16px}
+#dd-study .dd-listener button{width:100%;margin:8px 0}
+#dd-study main{min-width:0}
+#dd-study .dd-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid var(--dd-line)}
+#dd-study .dd-steps{display:flex;gap:6px;flex-wrap:wrap}
+#dd-study .dd-steps button{border-color:transparent;background:transparent}
+#dd-study .dd-steps button[aria-pressed=true]{background:var(--dd-soft)}
+#dd-study .dd-editor{padding:18px;border-bottom:1px solid var(--dd-line)}
+#dd-study .dd-editor-top{display:flex;justify-content:space-between;gap:14px;align-items:start;flex-wrap:wrap}
+#dd-study .dd-title{font-size:19px;letter-spacing:-.3px;font-weight:500;margin:0 0 4px}
+#dd-study .dd-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:16px 0}
+#dd-study .dd-field{display:flex;flex-direction:column;gap:4px;min-width:0}
+#dd-study .dd-field span{font-size:12px;color:var(--dd-muted)}
+#dd-study .dd-field strong{font-weight:500}
+#dd-study .dd-mono{font:12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace}
+#dd-study .dd-path{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--dd-muted)}
+#dd-study .dd-path b{font-weight:500;color:var(--dd-text)}
+#dd-study .dd-demo{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#dd-study .dd-demo label{font-size:12px;color:var(--dd-muted)}
+#dd-study .dd-tabs{display:flex;flex-wrap:wrap;gap:3px;padding:10px 18px 0;border-bottom:1px solid var(--dd-line);background:var(--dd-panel)}
+#dd-study .dd-tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;padding:8px 10px}
+#dd-study .dd-tabs button[aria-pressed=true]{border-bottom-color:var(--dd-primary);color:var(--dd-primary);background:transparent}
+#dd-study .dd-content{padding:18px;min-height:335px;background:var(--dd-panel)}
+#dd-study .dd-outcome{display:flex;gap:11px;padding:13px 14px;background:var(--dd-warn-bg);border-radius:8px;color:var(--dd-warn);margin-bottom:18px}
+#dd-study .dd-outcome strong{font-weight:500;display:block;font-size:16px}
+#dd-study .dd-outcome small{display:block;margin-top:3px;color:var(--dd-text)}
+#dd-study .dd-outcome.ok{background:var(--dd-low);color:var(--dd-success)}
+#dd-study .dd-evidence{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}
+#dd-study h3{font-size:13px;margin:0 0 10px;font-weight:600}
+#dd-study .dd-row{display:flex;gap:10px;justify-content:space-between;border-bottom:1px solid var(--dd-line);padding:7px 0;font-size:12px}
+#dd-study .dd-row span:last-child{color:var(--dd-muted);text-align:right}
+#dd-study .dd-next{font-size:12px;color:var(--dd-muted);margin:14px 0 0}
+#dd-study .dd-next strong{font-weight:500;color:var(--dd-text)}
+#dd-study table{border-collapse:collapse;width:100%;font-size:12px}
+#dd-study th,#dd-study td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--dd-line);overflow-wrap:anywhere}
+#dd-study th{font-weight:500;color:var(--dd-muted)}
+#dd-study table button{font-size:12px;padding:5px 8px}
+#dd-study .dd-table{overflow-x:auto}
+#dd-study .dd-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+#dd-study pre{white-space:pre-wrap;margin:0;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--dd-text)}
+#dd-study .dd-foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:9px 16px;color:var(--dd-muted);font-size:11px;border-top:1px solid var(--dd-line)}
+#dd-study[data-density=roomy] .dd-row{padding:11px 0}
+@media(max-width:700px){#dd-study .dd-layout{grid-template-columns:1fr}#dd-study aside{display:grid;grid-template-columns:1fr 1fr;gap:12px;border-right:0;border-bottom:1px solid var(--dd-line);padding:12px}#dd-study .dd-node{margin:0}#dd-study .dd-history-wrap{display:none}#dd-study .dd-listener{border:0;padding:0}#dd-study .dd-listener .dd-label{display:none}#dd-study .dd-evidence{grid-template-columns:1fr;gap:20px}#dd-study .dd-content{min-height:0}#dd-study .dd-fields{gap:12px}}
+@media(max-width:420px){#dd-study .dd-head{padding-right:75px}#dd-study .dd-fields{grid-template-columns:1fr}#dd-study .dd-editor,#dd-study .dd-content{padding:14px}#dd-study aside{grid-template-columns:1fr}#dd-study .dd-listener{display:flex;gap:8px;align-items:center;flex-wrap:wrap}#dd-study .dd-listener button{width:auto;margin:0}#dd-study .dd-tabs{padding-left:8px;padding-right:8px}}
+@media(pointer:coarse){#dd-study button,#dd-study select{min-height:44px}}
+</style>
+<div id="dd-study" aria-label="DimseDash workbench concept">
+  <div class="dd-window">
+    <header class="dd-head"><div class="dd-brand"><i data-lucide="waypoints" aria-hidden="true"></i>DimseDash</div><span class="dd-badge">Demo workspace</span><span class="dd-caption">Design study · synthetic data</span></header>
+    <div class="dd-layout">
+      <aside aria-label="Node and receiver">
+        <div><p class="dd-label">Nodes</p><div class="dd-node">Demo archive<small class="dd-mono">PACS_AET</small><small>Test environment</small></div>
+        <div class="dd-history-wrap"><p class="dd-label">Recent runs · examples</p><div class="dd-history"><span>✓ C-ECHO · 18 ms</span><span>✓ C-FIND · 1 study</span><span>! C-MOVE · partial</span></div></div></div>
+        <section class="dd-listener"><p class="dd-label">Local receiver</p><div class="dd-mono">DIMSEDASH</div><button type="button" id="dd-listener-toggle" aria-pressed="true">Listening · Stop</button><div class="dd-caption" id="dd-listener-note">Bound locally. Remote reachability unverified.</div></section>
+      </aside>
+      <main>
+        <div class="dd-toolbar"><nav class="dd-steps" aria-label="Operation"><button type="button" data-op="find" aria-pressed="false">Find</button><button type="button" data-op="move" aria-pressed="true">Retrieve · C-MOVE</button><button type="button" data-op="get" aria-pressed="false">Retrieve · C-GET</button></nav></div>
+        <section class="dd-editor" aria-label="Operation settings">
+          <div class="dd-editor-top"><div><h2 class="dd-title" id="dd-title">Retrieve selected series</h2><div class="dd-caption" id="dd-subtitle">Demo archive / Synthetic CT / Series 1</div></div><button class="dd-primary" type="button" id="dd-run">Run demo</button></div>
+          <div class="dd-fields" id="dd-fields"></div>
+          <div class="dd-path" id="dd-path"></div>
+        </section>
+        <nav class="dd-tabs" aria-label="Inspect run"><button type="button" data-view="summary" aria-pressed="true">Diagnostics</button><button type="button" data-view="objects" aria-pressed="false" id="dd-object-tab">Received objects</button><button type="button" data-view="trace" aria-pressed="false">Protocol trace</button><button type="button" data-view="report" aria-pressed="false">Report preview</button></nav>
+        <section class="dd-content" id="dd-content" aria-live="polite"></section>
+        <div class="dd-toolbar"><div class="dd-demo"><label for="dd-scenario">Simulated outcome</label><select id="dd-scenario"><option value="callback">No callback observed</option><option value="success">Successful exchange</option><option value="reject">Called AE rejected</option></select></div><span class="dd-caption">No network requests</span></div>
+      </main>
+    </div>
+    <footer class="dd-foot"><span>Local-first · Payloads excluded from history</span><span>Concept for macOS + Linux</span></footer>
+  </div>
+</div>
+<script>
+(() => {
+  const root = document.getElementById('dd-study');
+  const ui = { appearance: 'system', density: 'compact' };
+  const state = { op: 'move', view: 'summary', scenario: 'callback', listening: true };
+  const get = id => root.querySelector('#' + id);
+  function savedState() {
+    const saved = window.openai?.widgetState?.privateContent;
+    if (!saved || typeof saved !== 'object') return;
+    if (['find','move','get'].includes(saved.op)) state.op = saved.op;
+    if (['summary','objects','trace','report'].includes(saved.view)) state.view = saved.view;
+    if (['callback','success','reject'].includes(saved.scenario)) state.scenario = saved.scenario;
+    if (typeof saved.listening === 'boolean') state.listening = saved.listening;
+  }
+  function save() {
+    window.openai?.setWidgetState?.({modelContent:{concept:'Blue diagnostic workbench'},privateContent:{...state}})?.catch(() => {});
+  }
+  function status() {
+    if (state.scenario === 'reject') return 'reject';
+    if (state.op === 'move' && (state.scenario === 'callback' || !state.listening)) return 'callback';
+    return 'success';
+  }
+  function rows(pairs) { return pairs.map(([a,b]) => '<div class="dd-row"><span>'+a+'</span><span>'+b+'</span></div>').join(''); }
+  function fields(pairs) { return pairs.map(([a,b]) => '<div class="dd-field"><span>'+a+'</span><strong class="dd-mono">'+b+'</strong></div>').join(''); }
+  function outcome(kind) {
+    if (kind === 'reject') return '<div class="dd-outcome"><span>!</span><div><strong>Association rejected</strong><small>Peer reported “called AE title not recognized”. No DIMSE request was sent.</small></div></div>';
+    if (kind === 'callback') return '<div class="dd-outcome"><span>!</span><div><strong>PACS reported failures. No objects received.</strong><small>0xB000 · 2 failed sub-operations. The reason for the missing callback is unconfirmed.</small></div></div>';
+    return '<div class="dd-outcome ok"><span>✓</span><div><strong>'+(state.op === 'find' ? 'Query completed · 1 synthetic study' : 'Retrieval completed · 2 objects saved')+'</strong><small>'+(state.op === 'find' ? 'Study Root / STUDY · 0x0000' : 'Peer reported 2 completed. Local receipt and file-save counts agree.')+'</small></div></div>';
+  }
+  function render() {
+    if (state.op !== 'move' && state.scenario === 'callback') state.scenario = 'success';
+    const kind = status();
+    root.style.colorScheme = ui.appearance === 'system' ? 'light dark' : ui.appearance;
+    root.dataset.density = ui.density;
+    root.querySelectorAll('[data-op]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.op === state.op)));
+    root.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === state.view)));
+    get('dd-listener-toggle').textContent = state.listening ? 'Listening · Stop' : 'Stopped · Start';
+    get('dd-listener-toggle').setAttribute('aria-pressed',String(state.listening));
+    get('dd-listener-note').textContent = state.listening ? 'Bound locally. Remote reachability unverified.' : 'C-MOVE cannot deliver here until the listener starts.';
+    get('dd-title').textContent = state.op === 'find' ? 'Find a study' : 'Retrieve selected series';
+    get('dd-subtitle').textContent = state.op === 'find' ? 'Demo archive / Study Root' : 'Demo archive / Synthetic CT / Series 1';
+    get('dd-fields').innerHTML = state.op === 'find' ? fields([['Query level','STUDY'],['Patient ID','SYNTHETIC-001'],['Return keys','Study UID, modality']]) : fields([['Query level','SERIES'],['Storage path','Selected receive folder'],[state.op === 'move' ? 'Move destination' : 'Receive method',state.op === 'move' ? 'DIMSEDASH' : 'Same association']]);
+    get('dd-path').innerHTML = state.op === 'move' ? '<b>DimseDash → PACS</b> C-MOVE request <span>│</span><b>PACS → receiver</b> separate C-STORE association' : state.op === 'get' ? '<b>DimseDash ↔ PACS</b> C-GET and C-STORE share the association' : '<b>DimseDash → PACS</b> matching keys <span>│</span><b>PACS → DimseDash</b> matching studies';
+    get('dd-object-tab').textContent = state.op === 'find' ? 'Query results' : 'Received objects';
+    get('dd-scenario').value = state.scenario;
+    get('dd-scenario').querySelector('option[value="callback"]').disabled = state.op !== 'move';
+    const isFind = state.op === 'find';
+    let content = '';
+    if (state.view === 'summary') {
+      const timeline = kind === 'reject' ? [['Connection','Established'],['A-ASSOCIATE-RQ','Sent'],['A-ASSOCIATE-RJ','Received'],['DIMSE exchange','Not started']] : [['Association','Accepted'],[isFind ? 'C-FIND' : state.op === 'move' ? 'C-MOVE' : 'C-GET',kind === 'callback' ? 'Warning · 0xB000' : 'Success · 0x0000'],[isFind ? 'Result stream' : 'Incoming C-STORE',isFind ? '1 study' : kind === 'callback' ? 'Not observed' : '2 instances'],['Association release','Completed']];
+      const evidence = kind === 'reject' ? [['Result','1 · Permanent'],['Source','1 · Service user'],['Reason','7 · Called AE unrecognized'],['Data received','None']] : isFind ? [['Model / level','Study Root / STUDY'],['Matches','1'],['Final status','0x0000'],['Result retention','Current session only']] : [['PACS completed / failed',kind === 'callback' ? '0 / 2' : '2 / 0'],['Locally received',kind === 'callback' ? '0' : '2'],['Saved / local failures',kind === 'callback' ? '0 / 0' : '2 / 0'],['Callback cause',kind === 'callback' ? 'Unknown' : state.op === 'get' ? 'Not applicable to C-GET' : 'Receipt confirmed']];
+      content = outcome(kind)+'<div class="dd-evidence"><section><h3>Observed sequence</h3>'+rows(timeline)+'</section><section><h3>'+(kind === 'reject' ? 'Peer-reported evidence' : isFind ? 'Query evidence' : 'Peer report & local receipt')+'</h3>'+rows(evidence)+'</section></div>';
+      if (kind === 'callback') content += '<p class="dd-next"><strong>Next checks</strong> · Confirm destination registration, address and port; check receiver access rules and the PACS storage log. Firewall or negotiation failure is possible, not proven.</p>';
+      if (kind === 'reject') content += '<p class="dd-next"><strong>Next check</strong> · Compare the configured called AE with the PACS AE title.</p>';
+      if (isFind && kind === 'success') content += '<div class="dd-actions"><button type="button" data-show-results>Inspect matching study →</button></div>';
+    } else if (state.view === 'objects') {
+      if (kind !== 'success') content = outcome(kind)+'<p class="dd-caption">No objects available for this simulated run.</p>';
+      else if (isFind) content = '<h3>Matching study · synthetic data</h3><div class="dd-table"><table><thead><tr><th>Patient ID</th><th>Study description</th><th>Modality</th><th>Series</th></tr></thead><tbody><tr><td>SYNTHETIC-001</td><td>CT connectivity fixture</td><td>CT</td><td>1</td></tr></tbody></table></div><div class="dd-actions"><button type="button" data-retrieve="move">Retrieve series · C-MOVE</button><button type="button" data-retrieve="get">Retrieve series · C-GET</button></div>';
+      else content = '<h3>Received objects · saved to the selected folder</h3><div class="dd-table"><table><thead><tr><th>Object</th><th>SOP class</th><th>Transfer syntax</th><th>Save result</th></tr></thead><tbody><tr><td>Synthetic instance 1</td><td>CT Image Storage</td><td>Explicit VR Little Endian</td><td>Saved</td></tr><tr><td>Synthetic instance 2</td><td>CT Image Storage</td><td>Explicit VR Little Endian</td><td>Saved</td></tr></tbody></table></div><p class="dd-next">Header inspection can be added here without making image decoding a requirement for receiving files.</p>';
+    } else if (state.view === 'trace') {
+      const trace = kind === 'reject' ? '→ A-ASSOCIATE-RQ\n← A-ASSOCIATE-RJ\n  result = 1   source = 1   reason = 7\n  Called AE title not recognized' : '→ A-ASSOCIATE-RQ\n← A-ASSOCIATE-AC\n→ '+(isFind ? 'C-FIND' : state.op === 'move' ? 'C-MOVE' : 'C-GET')+'-RQ\n'+(kind === 'callback' ? '← C-MOVE-RSP  status = 0xB000\n  completed = 0   failed = 2   warning = 0\n  Local receive events: none observed' : isFind ? '← C-FIND-RSP  status = 0xFF00  [dataset omitted]\n← C-FIND-RSP  status = 0x0000' : '  C-STORE-RQ × 2 observed\n  Local saves acknowledged × 2\n← Retrieve response  status = 0x0000\n  completed = 2   failed = 0   warning = 0')+'\n↔ A-RELEASE';
+      content = '<h3>Illustrative trace · payloads omitted</h3><pre>'+trace.replaceAll('&','&amp;').replaceAll('<','&lt;')+'</pre>';
+    } else {
+      content = '<h3>Sanitized report preview</h3><pre>'+JSON.stringify({schemaVersion:1,source:'synthetic design study',operation:isFind ? 'C-FIND' : state.op === 'move' ? 'C-MOVE' : 'C-GET',outcome:kind === 'success' ? 'success' : kind === 'reject' ? 'association_rejected' : 'warning',peerStatus:kind === 'reject' ? null : kind === 'callback' ? '0xB000' : '0x0000',locallySaved:isFind ? null : kind === 'success' ? 2 : 0,cause:kind === 'callback' ? 'unknown' : kind === 'reject' ? 'peer_reported_called_ae_unrecognized' : null,payloadsIncluded:false},null,2)+'</pre>';
+    }
+    get('dd-content').innerHTML = content;
+  }
+  root.addEventListener('click',e => {
+    const b=e.target.closest('button'); if(!b) return;
+    if (b.dataset.op) {state.op=b.dataset.op; state.view='summary';}
+    if (b.dataset.view) state.view=b.dataset.view;
+    if (b.hasAttribute('data-show-results')) state.view='objects';
+    if (b.dataset.retrieve) {state.op=b.dataset.retrieve; state.view='summary';}
+    if (b.id==='dd-listener-toggle') state.listening=!state.listening;
+    if (b.id==='dd-run') state.view='summary';
+    render(); save();
+  });
+  get('dd-scenario').addEventListener('change',e=>{state.scenario=e.target.value;render();save();});
+  window.addEventListener('openai:set_globals',e=>{if(e.detail?.globals?.widgetState){const v=e.detail.globals.widgetState.privateContent;if(v && typeof v==='object'){for(const k of ['op','view','scenario']){const allowed={op:['find','move','get'],view:['summary','objects','trace','report'],scenario:['callback','success','reject']}[k];if(allowed.includes(v[k])) state[k]=v[k];}if(typeof v.listening==='boolean')state.listening=v.listening;render();}}});
+  savedState(); render();
+  if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:render});tweak.addSelect(ui,'appearance',{label:'Appearance',options:['system','light','dark']});tweak.addSelect(ui,'density',{label:'Row density',options:['compact','roomy']});}
+})();
+</script>

@@ -1,0 +1,35 @@
+# Fast checks only. Analysis, tests and native builds belong to the dry gate.
+repos:
+  - repo: local
+    hooks:
+      - id: dart-format
+        name: Dart format (FVM)
+        entry: fvm dart format
+        language: system
+        types: [dart]
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+        entry: uvx --from pre-commit-hooks==6.0.0 trailing-whitespace-fixer
+        language: system
+        types: [text]
+      - id: end-of-file-fixer
+        name: Final newline
+        entry: uvx --from pre-commit-hooks==6.0.0 end-of-file-fixer
+        language: system
+        types: [text]
+      - id: check-yaml
+        name: YAML syntax
+        entry: uvx --from pre-commit-hooks==6.0.0 check-yaml
+        language: system
+        types: [yaml]
+      - id: check-merge-conflict
+        name: Merge conflict markers
+        entry: uvx --from pre-commit-hooks==6.0.0 check-merge-conflict
+        language: system
+        types: [text]
+      - id: gitleaks
+        name: Secret scan (tracked and non-ignored new files)
+        entry: python3 tool/check_secrets.py
+        language: system
+        pass_filenames: false
+        always_run: true

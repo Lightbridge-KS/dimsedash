@@ -1,0 +1,47 @@
+name: dimsedash
+description: Desktop workbench for diagnosing DICOM DIMSE communication.
+publish_to: none
+version: 0.1.0-dev.1+1
+environment:
+  sdk: ^3.13.0
+workspace:
+  - packages/dimsedash_core
+dependencies:
+  flutter:
+    sdk: flutter
+  dimsedash_core:
+    path: packages/dimsedash_core
+  flutter_riverpod: 3.4.3
+  drift: 2.35.2
+  sqlite3: 3.7.1
+  path_provider: 2.1.6
+  path: 1.9.1
+  uuid: 4.6.0
+  dartdicom_net:
+    git:
+      url: https://github.com/Lightbridge-KS/dartdicom.git
+      ref: 7f9a80d3a257a6936011250ce3e701b47b717385
+      path: dartdicom_net
+  dartdicom_pixel:
+    git:
+      url: https://github.com/Lightbridge-KS/dartdicom.git
+      ref: 7f9a80d3a257a6936011250ce3e701b47b717385
+      path: dartdicom_pixel
+dependency_overrides:
+  dartdicom:
+    git:
+      url: https://github.com/Lightbridge-KS/dartdicom.git
+      ref: 7f9a80d3a257a6936011250ce3e701b47b717385
+      path: dartdicom
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: 6.0.0
+  drift_dev: 2.35.1
+  build_runner: 2.16.1
+  analyzer: 13.3.0
+  yaml: 3.1.4
+flutter:
+  uses-material-design: true
