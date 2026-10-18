@@ -224,6 +224,46 @@ When work lands upstream, record issue/PR, release or commit pin, contract tests
 | S7 | — | Not run | Not run | Not run / Not run | Pending |
 | S8 | — | Not run | Not run | Not run / Not run | Pending |
 
+### Refactoring verification — 2026-10-19
+
+Source revisions: `15dba15` (configuration/widgets, test organization and tooling) and
+`b8dee94` (native synthetic-input focus correction). These changes preserve S0
+behavior and do not complete its remaining desktop acceptance.
+
+- Configuration validation now has a separate owner from the records, with the
+  same package exports, rules, exact messages, error order and immutable results.
+  Two added characterization tests pass against the original and extracted
+  implementation; boundary, message and default mutations are rejected.
+- Private shell sidebar/placeholder and Settings enum/connection widgets retain
+  parent-owned state, controllers, callbacks and persistence. Public constructors,
+  field keys, layout, masking and Settings disposal behavior are preserved.
+  Added characterization tests pass against both implementations; navigation,
+  subscription, draft retention, dropdown-key and save-state mutations are rejected.
+- All 40 local pre/post visual comparisons pass: 16 shell snapshots at 760 × 600,
+  and 24 Settings snapshots at 760 × 600 and 1200 × 1000, across light/dark and
+  empty/edited/saved states. Deliberate one-pixel layout changes are rejected.
+  Fixtures remain ignored exploratory evidence, not a cross-platform golden gate.
+- Dry tests are grouped by owner under `tests/dry`; core tests remain package-local
+  under `packages/dimsedash_core/tests`. Baseline/reorganized discovery preserves
+  all 30 Flutter and 22 core test names/results. Token comparison preserves the
+  23 Flutter test declarations and fixture behavior, apart from the relocated
+  process-probe path. Core tests also pass independently from their package folder.
+- Native source lives under `tests/native`, reached through the relative
+  `integration_test` symlink. A repeated run exposed dropped synthetic input after
+  focus changes; the harness now focuses fields and checks each injected value.
+  All original validation/save/runtime-reopen/masking assertions remain.
+  `just native-test` passes twice on macOS 15.7.7 arm64 through the alias. Flutter
+  emits `Failed to foreground app; open returned 1`; automated success does not
+  verify interactive foregrounding or real keyboard input.
+- `tools/` replaces `tool/`; all four script bodies are unchanged. Runner, CI,
+  hook, test-import and documentation paths agree. VS Code selects the FVM SDK
+  and recognizes tests outside `test/`; the pinned analyzer reports no issues.
+- Final `just dry` passes: formatting, analysis, 52 tests, architecture/design
+  checks, secrets scan, dependency audit (114 records; zero advisory/retraction
+  failures) and macOS release build. Commit hooks pass. Hosted CI, Linux execution,
+  OS process restart and packaged desktop acceptance are separate evidence.
+  See the [suite map](../tests/README.md) and [S0 runbook](../tests/s0-configuration.md).
+
 ## Deferred
 
 The [PRD later-scope table](../req/dimsedash-prd.md#10-preserved-later-scope) remains authoritative: local rule engine, multi-target batching/queues, saved templates/import-export, TLS, legacy Thai, richer viewers/codecs, automation and broader service/platform scope do not enter these slices incidentally. Numeric performance targets require workload/hardware evidence before becoming acceptance thresholds. Broader vendor field evaluation follows separately authorized testing; synthetic preview gates do not prove commercial PACS conformance.
