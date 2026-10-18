@@ -96,7 +96,7 @@ Rows may import columns marked ✓; a dash forbids it. Internal imports within a
 - DICOM adapters depend on public network/core library APIs; persistence adapters may combine their own DB/files submodules. Cross-adapter calls use an injected core seam, not private sibling implementations.
 - Only the bootstrap reads platform paths and chooses real/fake dependencies. Tests may import concrete adapters for integration/contract tests and core internals within that package; production restrictions remain unchanged.
 
-**Enforcing tool contract:** implement `tool/check_architecture.dart` at scaffold using Dart analyzer AST/URI resolution. Check imports **and exports**, conditional branches, package and normalized relative paths, `part` ownership, external `src` imports and declared dependencies in both pubspecs. It emits offending source/target with a stable nonzero exit and has allowed/forbidden fixture tests. An empty or missing application tree must report **not scaffolded**, not a passing architecture gate. Wire it into `just check-architecture` and dry CI; Dart analyzer alone does not enforce this matrix. S0 implements this checker and negative fixtures; the tracker records execution evidence.
+**Enforcing tool contract:** implement `tools/check_architecture.dart` at scaffold using Dart analyzer AST/URI resolution. Check imports **and exports**, conditional branches, package and normalized relative paths, `part` ownership, external `src` imports and declared dependencies in both pubspecs. It emits offending source/target with a stable nonzero exit and has allowed/forbidden fixture tests. An empty or missing application tree must report **not scaffolded**, not a passing architecture gate. Wire it into `just check-architecture` and dry CI; Dart analyzer alone does not enforce this matrix. S0 implements this checker and negative fixtures; the tracker records execution evidence.
 
 ## 4. Intended source tree
 
@@ -115,7 +115,7 @@ lib/
     bootstrap.dart                  Opens/reconciles stores and constructs one runtime
     app_runtime.dart                Owns shared controllers, workers and bounded shutdown
     app.dart                        Material shell/theme, top-level provider scope
-    shell.dart                      Composes feature screens and persistent receiver strip
+    shell.dart                      Composes screens; private sidebar and workflow-placeholder widgets (amended)
   bindings/
     runtime_providers.dart          Injected runtime/seams and read-only observations
     disclosure_state.dart           Session masking/reveal state, never persisted
@@ -131,6 +131,7 @@ lib/
     files/                          Inventory, header/thumbnail inspection, cleanup preview
     history/                        Retained run inspection, omitted-input draft restoration
     settings/                       Preferences, storage and retention views
+      settings_view.dart            Stateful draft owner; private enum-field and connection-section widgets (amended)
     reports/                        Exact export preview and explicit save action
   adapters/
     dicom/
@@ -159,6 +160,7 @@ packages/dimsedash_core/
         identity.dart               Local IDs and injected clock/ID generation contracts
       configuration/
         configuration.dart          Node/local identity/preferences/receive-root records
+        configuration_validation.dart  Shared configuration validation policy (amended)
         config_store.dart           Configuration CRUD seam, without a pass-through service
       query/
         identifier.dart             Immutable entry/sequence tree and matching purpose
@@ -183,15 +185,20 @@ packages/dimsedash_core/
         desktop_services.dart       Pure-Dart chooser/export/copy/reveal/lifecycle seam
       inspection/
         inspection.dart            Header/thumbnail request and result seam
-  test/                             Core invariant tests and deterministic fakes
+  tests/                            Package-local pure-Dart invariant tests (amended)
   test_support/                     Reusable fake peers/stores/time for root tests; not public lib
-test/                              Root widget, adapter contract and hermetic storage tests
-integration_test/                  Explicit live/native packaged workflows
-tool/check_architecture.dart       Import/dependency gate and self-test fixtures
+tests/                             Root test suites, grouped by execution gate and owner (amended)
+  dry/                             App, bindings, adapters, feature widgets and tooling checks
+  native/                          Explicit native configuration workflow
+  support/                         Shared in-memory store and synthetic configuration input
+integration_test -> tests/native   Flutter-compatible native runner alias; no duplicate source
+tools/check_architecture.dart      Import/dependency gate and self-test fixtures
 docs/structure/                    This map; no generated source inventory
 ```
 
 A feature normally begins with `<feature>_view.dart` and `<feature>_controller.dart`; add a widget or state file when it hides real complexity. A controller here is a Flutter presentation object, distinct from the application-owned ReceiverController. Riverpod is the binding mechanism, not a second business-logic owner. Navigation composes features in the shell; a feature never imports a sibling controller to trigger work.
+
+The [test suite map](../tests/README.md) records suite ownership, shared fixtures and explicit runner paths. `just test` includes only dry suites and package-local core tests; `just native-test` uses the root alias so Flutter selects native integration mode.
 
 Use official Flutter/Dart tooling to create the app and private package when implementation is authorized. Exact workspace/path dependency setup and package versions are scaffold work; no assumption about a globally selected SDK enters contributor commands. The app manifest owns the app version; private core is not independently released. Prototype HTML stays design evidence, never production runtime code.
 
@@ -376,7 +383,7 @@ Paths are primary entry points; tests sit beside the corresponding capability or
 | Change masking/copy/thumbnail reveal | `lib/bindings/disclosure_state.dart`; shared widgets receive its display projection |
 | Add a supported thumbnail result or worker limit | `lib/adapters/inspection/inspection_worker.dart` |
 | Fix native folder/quit/export integration | `lib/adapters/platform/desktop_services.dart` |
-| Change module import policy | `tool/check_architecture.dart` plus its failing/passing fixtures |
+| Change module import policy | `tools/check_architecture.dart` plus its failing/passing fixtures |
 
 Protocol defects belong upstream with regression evidence. A missing public observation is not fixed by importing upstream internals, parsing trace strings or manufacturing an app-only PDU decoder.
 

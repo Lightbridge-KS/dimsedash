@@ -23,7 +23,7 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-13-dev
       - name: Pinned tools
-        run: bash tool/setup_ci.sh
+        run: bash tools/setup_ci.sh
       - name: Locked dependencies
         run: just setup
       - name: Generated source parity

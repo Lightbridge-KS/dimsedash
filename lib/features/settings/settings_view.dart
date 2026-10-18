@@ -62,12 +62,12 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
               children: [
                 Text('DICOM connection', style: theme.textTheme.titleLarge),
                 const SizedBox(height: 20),
-                Text('Client node', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
-                  children: [
+                _ConnectionSection(
+                  header: Text(
+                    'Client node',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  fields: [
                     _field('Calling AE Title', 'callingAe'),
                     _field(
                       'Client listening port · C-MOVE',
@@ -75,82 +75,51 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       number: true,
                     ),
                   ],
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Default AE: DIMSE_DASH. This identity also serves the local receiver and C-MOVE destination. C-GET needs no separate listener.',
+                  helperText: 'Default AE: DIMSE_DASH. This identity also serves the local receiver and C-MOVE destination. C-GET needs no separate listener.',
                 ),
                 const Divider(height: 32),
-                if (_base.node == null)
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Configure a remote PACS'),
-                    value: _hasNode,
-                    onChanged: _saving
-                        ? null
-                        : (value) => setState(() => _hasNode = value!),
-                  )
-                else
-                  Text(
-                    'Remote PACS · selected node',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                if (_hasNode) ...[
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 16,
-                    children: [
-                      _field('Node name', 'label'),
-                      _field('Called AE Title', 'calledAe'),
-                      _field('PACS IP address / host', 'host'),
-                      _field('PACS port', 'pacsPort', number: true),
-                      SizedBox(
-                        width: 300,
-                        child: DropdownButtonFormField<NodeEnvironment>(
-                          key: ValueKey(_environment),
-                          initialValue: _environment,
-                          decoration: const InputDecoration(
-                            labelText: 'Environment',
-                          ),
-                          items: NodeEnvironment.values
-                              .map(
-                                (e) => DropdownMenuItem(
-                                  value: e,
-                                  child: Text(e.name),
-                                ),
-                              )
-                              .toList(),
+                _ConnectionSection(
+                  header: _base.node == null
+                      ? CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Configure a remote PACS'),
+                          value: _hasNode,
                           onChanged: _saving
                               ? null
-                              : (value) =>
-                                    setState(() => _environment = value!),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'For C-MOVE, register the client AE, reachable address and listening port on the PACS. Applying these settings does not update that registration.',
-                  ),
-                ],
-                const Divider(height: 32),
-                SizedBox(
-                  width: 300,
-                  child: DropdownButtonFormField<Appearance>(
-                    key: ValueKey(_appearance),
-                    initialValue: _appearance,
-                    decoration: const InputDecoration(labelText: 'Appearance'),
-                    items: Appearance.values
-                        .map(
-                          (e) =>
-                              DropdownMenuItem(value: e, child: Text(e.name)),
+                              : (value) => setState(() => _hasNode = value!),
                         )
-                        .toList(),
-                    onChanged: _saving
-                        ? null
-                        : (value) => setState(() => _appearance = value!),
-                  ),
+                      : Text(
+                          'Remote PACS · selected node',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                  showFields: _hasNode,
+                  fields: _hasNode
+                      ? [
+                          _field('Node name', 'label'),
+                          _field('Called AE Title', 'calledAe'),
+                          _field('PACS IP address / host', 'host'),
+                          _field('PACS port', 'pacsPort', number: true),
+                          _EnumSettingField<NodeEnvironment>(
+                            label: 'Environment',
+                            value: _environment,
+                            values: NodeEnvironment.values,
+                            onChanged: _saving
+                                ? null
+                                : (value) =>
+                                      setState(() => _environment = value!),
+                          ),
+                        ]
+                      : const [],
+                  helperText: 'For C-MOVE, register the client AE, reachable address and listening port on the PACS. Applying these settings does not update that registration.',
+                ),
+                const Divider(height: 32),
+                _EnumSettingField<Appearance>(
+                  label: 'Appearance',
+                  value: _appearance,
+                  values: Appearance.values,
+                  onChanged: _saving
+                      ? null
+                      : (value) => setState(() => _appearance = value!),
                 ),
                 const SizedBox(height: 20),
                 if (_message != null)
@@ -267,4 +236,64 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       ),
     ),
   );
+}
+
+class _EnumSettingField<T extends Enum> extends StatelessWidget {
+  const _EnumSettingField({
+    required this.label,
+    required this.value,
+    required this.values,
+    required this.onChanged,
+  });
+
+  final String label;
+  final T value;
+  final List<T> values;
+  final ValueChanged<T?>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 300,
+      child: DropdownButtonFormField<T>(
+        key: ValueKey(value),
+        initialValue: value,
+        decoration: InputDecoration(labelText: label),
+        items: values
+            .map((e) => DropdownMenuItem<T>(value: e, child: Text(e.name)))
+            .toList(),
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
+class _ConnectionSection extends StatelessWidget {
+  const _ConnectionSection({
+    required this.header,
+    required this.fields,
+    required this.helperText,
+    this.showFields = true,
+  });
+
+  final Widget header;
+  final List<Widget> fields;
+  final String helperText;
+  final bool showFields;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        header,
+        if (showFields) ...[
+          const SizedBox(height: 16),
+          Wrap(spacing: 16, runSpacing: 16, children: fields),
+          const SizedBox(height: 12),
+          Text(helperText),
+        ],
+      ],
+    );
+  }
 }

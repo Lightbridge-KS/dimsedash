@@ -32,6 +32,18 @@ down and recreates the runtime and widget tree; it is **not** an OS process rest
 Synthetic text input is registered explicitly so desktop IME events cannot replace
 injected test values. Real keyboard behavior therefore remains a separate check.
 
+The [test suite map](README.md) lists the current source layout and explicit runner
+paths. Native source lives under `tests/native`; the `integration_test` symlink
+preserves Flutter's native-test classification.
+
+Refactor verification (2026-10-19): the same 30 Flutter and 22 core dry
+tests pass after relocation and regrouping. `just native-test` builds and runs the
+unchanged native scenario through the alias on macOS 15.7.7 arm64; its single
+validation/save/runtime-reopen test passes. Flutter reports `Failed to foreground
+app; open returned 1`; this does not fail the automated run, and interactive
+foregrounding is not verified. The remaining desktop acceptance items below are
+unchanged.
+
 ## Evidence — 2026-10-19
 
 The initial implementation is recorded in `fdaf6d4`. Results below are local

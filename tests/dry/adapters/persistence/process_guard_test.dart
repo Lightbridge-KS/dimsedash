@@ -10,7 +10,7 @@ void main() {
     final guard = await ProcessGuard.acquire(lock);
     Future<ProcessResult> probe() => Process.run(
       Platform.environment['DART_BIN'] ?? 'dart',
-      ['test/support/lock_probe.dart', lock.path],
+      ['tests/dry/adapters/persistence/support/lock_probe.dart', lock.path],
     );
     try {
       expect((await probe()).exitCode, 42);

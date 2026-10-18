@@ -29,7 +29,7 @@ repos:
         types: [text]
       - id: gitleaks
         name: Secret scan (tracked and non-ignored new files)
-        entry: python3 tool/check_secrets.py
+        entry: python3 tools/check_secrets.py
         language: system
         pass_filenames: false
         always_run: true

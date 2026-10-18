@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import '../tool/check_architecture.dart';
+import '../../../tools/check_architecture.dart';
 
 void main() {
   late Directory root;

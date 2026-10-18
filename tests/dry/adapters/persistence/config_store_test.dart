@@ -2,12 +2,12 @@ import 'dart:io';
 
 import 'package:dimsedash/adapters/persistence/config_store.dart';
 import 'package:dimsedash/adapters/persistence/database.dart';
-import 'package:dimsedash/app/bootstrap.dart';
-import 'package:dimsedash/app/app_runtime.dart';
 import 'package:dimsedash_core/dimsedash_core.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqlite3/sqlite3.dart';
+
+import '../../../support/synthetic_configuration.dart';
 
 void main() {
   late Directory dir;
@@ -105,37 +105,4 @@ void main() {
     expect(db.select('PRAGMA user_version').single.values.single, 99);
     db.close();
   });
-  test('corrupt file is preserved on startup failure', () async {
-    final bytes = List.generate(200, (i) => i % 255);
-    file.writeAsBytesSync(bytes);
-    expect(await bootstrap(supportDirectory: dir), isA<Failure<AppRuntime>>());
-    expect(file.readAsBytesSync(), bytes);
-  });
-  test('runtime can close and reopen the same support directory', () async {
-    final first =
-        (await bootstrap(supportDirectory: dir) as Success<AppRuntime>).value;
-    await first.configStore.save(draft());
-    await first.close();
-    final second =
-        (await bootstrap(supportDirectory: dir) as Success<AppRuntime>).value;
-    expect(second.initial.node!.host, '192.0.2.1');
-    await second.close();
-  });
 }
-
-AppConfiguration draft({int revision = 0, String host = '192.0.2.1'}) =>
-    AppConfiguration(
-      revision: revision,
-      client: const ClientSettings(
-        callingAe: 'TEST_CLIENT',
-        listenPort: 11113,
-        appearance: Appearance.dark,
-      ),
-      node: PacsNode(
-        id: '',
-        label: 'Synthetic PACS',
-        calledAe: 'PACS_AET',
-        host: host,
-        port: 104,
-      ),
-    );

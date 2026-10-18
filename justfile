@@ -12,29 +12,29 @@ generate:
     {{dart}} run build_runner build
 
 format:
-    {{dart}} format lib packages/dimsedash_core/lib packages/dimsedash_core/test test integration_test tool
+    {{dart}} format lib packages/dimsedash_core/lib packages/dimsedash_core/tests tests tools
 
 check-format:
-    {{dart}} format --output=none --set-exit-if-changed lib packages/dimsedash_core/lib packages/dimsedash_core/test test integration_test tool
+    {{dart}} format --output=none --set-exit-if-changed lib packages/dimsedash_core/lib packages/dimsedash_core/tests tests tools
 
 analyze:
     {{flutter}} analyze --no-pub
 
 test:
-    {{flutter}} test --no-pub
-    {{dart}} test packages/dimsedash_core/test
+    {{flutter}} test tests/dry --no-pub
+    {{dart}} test packages/dimsedash_core/tests
 
 check-architecture:
-    {{dart}} run tool/check_architecture.dart
+    {{dart}} run tools/check_architecture.dart
 
 check-design:
     pnpm dlx @google/design.md@0.4.0 lint DESIGN.md
 
 audit:
-    {{dart}} run tool/check_dependencies.dart
+    {{dart}} run tools/check_dependencies.dart
 
 secrets:
-    python3 tool/check_secrets.py
+    python3 tools/check_secrets.py
 
 build:
     {{flutter}} build {{ if os() == 'macos' { 'macos' } else { 'linux' } }} --release --no-pub
