@@ -21,6 +21,21 @@ void main() {
     addTearDown(tester.testTextInput.unregister);
     final dir = await Directory.systemTemp.createTemp('dimsedash-native-');
     AppRuntime? runtime;
+    Future<void> enterText(String key, String text) async {
+      final field = find.byKey(ValueKey(key));
+      await tester.ensureVisible(field);
+      // Re-establish focus after button taps or scrolling before injecting text.
+      await tester.tap(field);
+      await tester.pumpAndSettle();
+      await tester.enterText(field, text);
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(field).controller!.text,
+        text,
+        reason: 'Synthetic input must reach $key before continuing.',
+      );
+    }
+
     Future<void> launch() async {
       runtime =
           (await bootstrap(supportDirectory: dir) as Success<AppRuntime>).value;
@@ -42,10 +57,7 @@ void main() {
       expect(find.textContaining('Stopped'), findsWidgets);
       await tester.tap(find.text('Settings').first);
       await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const ValueKey('callingAe')),
-        'TOO_LONG_AE_TITLE_VALUE',
-      );
+      await enterText('callingAe', 'TOO_LONG_AE_TITLE_VALUE');
       await tester.ensureVisible(find.text('Apply connection'));
       await tester.tap(find.text('Apply connection'));
       await tester.pumpAndSettle();
@@ -56,13 +68,8 @@ void main() {
             .revision,
         0,
       );
-      await tester.enterText(
-        find.byKey(const ValueKey('callingAe')),
-        'TEST_CLIENT',
-      );
-      await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const ValueKey('listenPort')), '11113');
-      await tester.pumpAndSettle();
+      await enterText('callingAe', 'TEST_CLIENT');
+      await enterText('listenPort', '11113');
       await tester.tap(find.text('Configure a remote PACS'));
       await tester.pumpAndSettle();
       for (final entry in {
@@ -71,10 +78,7 @@ void main() {
         'host': '192.0.2.1',
         'pacsPort': '104',
       }.entries) {
-        final field = find.byKey(ValueKey(entry.key));
-        await tester.ensureVisible(field);
-        await tester.enterText(field, entry.value);
-        await tester.pumpAndSettle();
+        await enterText(entry.key, entry.value);
       }
       await tester.ensureVisible(find.text('Apply connection'));
       await tester.tap(find.text('Apply connection'));

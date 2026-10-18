@@ -29,8 +29,10 @@ Setup and tool pins: [development](../dev/development.md).
 `just test` runs core, storage, architecture and widget checks. `just native-test`
 runs the UI against native SQLite using a temporary support directory. It tears
 down and recreates the runtime and widget tree; it is **not** an OS process restart.
-Synthetic text input is registered explicitly so desktop IME events cannot replace
-injected test values. Real keyboard behavior therefore remains a separate check.
+The native harness registers synthetic text input, focuses each field before
+injection, and checks that the expected value reached the controller before
+continuing. This avoids silently continuing after dropped synthetic input;
+real keyboard behavior remains a separate check.
 
 The [test suite map](README.md) lists the current source layout and explicit runner
 paths. Native source lives under `tests/native`; the `integration_test` symlink
@@ -38,8 +40,9 @@ preserves Flutter's native-test classification.
 
 Refactor verification (2026-10-19): the same 30 Flutter and 22 core dry
 tests pass after relocation and regrouping. `just native-test` builds and runs the
-unchanged native scenario through the alias on macOS 15.7.7 arm64; its single
-validation/save/runtime-reopen test passes. Flutter reports `Failed to foreground
+native scenario through the alias on macOS 15.7.7 arm64; its single
+validation/save/runtime-reopen test passes twice after the input-focus correction.
+All original scenario assertions remain. Flutter reports `Failed to foreground
 app; open returned 1`; this does not fail the automated run, and interactive
 foregrounding is not verified. The remaining desktop acceptance items below are
 unchanged.
