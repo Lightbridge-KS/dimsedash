@@ -11,13 +11,14 @@ Parent: [first-preview overview](overview-first-preview.md).
 
 ## Now / Next
 
-S1 implementation and released-dependency verification are complete locally.
-Delivery to `main` is active: commit the reviewed sources, verify a fresh clone
-from the remote and hosted macOS/Linux CI, then record immutable receipts here.
-All DICOM libraries resolve to published `v0.1.0-dev.2` at
+S1 is landed on `main` at [`40b1563`](https://github.com/Lightbridge-KS/dimsedash/commit/40b15631e2dfd7c3c10de597be47f356934c0cbf).
+A fresh clone from GitHub passed the complete macOS verification matrix and stayed
+clean. [Hosted CI](https://github.com/Lightbridge-KS/dimsedash/actions/runs/39249838352) passed on that exact commit for `macos-15` and
+`ubuntu-24.04`. All DICOM libraries resolve to `v0.1.0-dev.2` at
 `53ee5ec9c204e58382bf9235a621eb05af8d4179`, without a local override.
-S0 native acceptance remains deferred. S1 is not an installable public-preview
-release, and no later slice has started.
+Implementation and automated delivery verification are complete. Manual desktop
+acceptance remains pending, including the deferred S0 checks. Later slices have
+not started; S1 is not an installable public-preview release.
 
 ## Settled contracts
 
@@ -43,7 +44,7 @@ release, and no later slice has started.
 - [x] macOS native/release checks; record Linux automated evidence separately.
 - [x] Update owning design/runbook documents and review all uncommitted changes.
 - [x] Consume the published upstream tag consistently; verify isolated sources with fresh Git dependency resolution on both platforms.
-- [ ] Record the app implementation commit, committed-clone checks and hosted app CI after review.
+- [x] Record the app implementation commit, committed-clone checks and hosted app CI: `40b1563`; receipts below.
 
 ## Initial paired verification ledger
 
@@ -96,8 +97,9 @@ Source provenance: app baseline `182e12a` plus uncommitted S1 and migration
 changes. An isolated snapshot contains tracked and non-ignored new files, with
 a temporary Git index for secret scanning and no implementation commit. macOS 15.7.7 arm64 uses Flutter 3.47.7 / Dart 3.13.5 and a fresh package cache;
 Linux uses the same SDK in a fresh Ubuntu 24.04.5 amd64 container under
-CPU emulation. Neither mounts a sibling library checkout. No committed S1 clean
-clone or hosted app CI result is claimed. Library Git roots, versions, clean
+CPU emulation. Neither mounts a sibling library checkout. This snapshot phase
+did not claim a committed S1 clean clone or hosted app CI; the landed verification
+below supplies those receipts. Library Git roots, versions, clean
 status and resolved revision are checked independently of generated app text.
 
 | Check | Result and limit |
@@ -123,11 +125,39 @@ Raw logs, source hashes and dependency receipts remain in ignored scratch output
 The runtime/test sources and dependency files must match the verified snapshot;
 subsequent tracker/runbook text changes are documentation only.
 
-## Pending delivery / acceptance
+## Landed implementation and clean-clone verification — 2026-10-19
 
-- Upstream publication is complete. All four manifest refs and three lock entries
-  use `v0.1.0-dev.2` at `53ee5ec9c204e58382bf9235a621eb05af8d4179`.
-  Released-dependency checks above passed; DimseDash remains uncommitted.
-- A committed S1 clean clone and hosted app CI remain pending until the app changes land. The isolated snapshots include uncommitted sources and are not substitute commit receipts.
-- S0 real-keyboard/process-restart and Ubuntu GNOME Wayland/Xorg acceptance remain deferred.
-- S1 automated native/live evidence is recorded above; manual desktop acceptance, release signing/notarization and packaging are not inferred from it.
+Implementation: [`40b15631e2dfd7c3c10de597be47f356934c0cbf`](https://github.com/Lightbridge-KS/dimsedash/commit/40b15631e2dfd7c3c10de597be47f356934c0cbf)
+(`feat: add node management and Echo diagnostics`), pushed directly to `main`.
+The following checks use a fresh HTTPS clone from GitHub at that commit, a separate
+package cache, and the pinned Flutter 3.47.7 / Dart 3.13.5 SDK on macOS 15.7.7 arm64.
+No sibling source, filesystem dependency override, copied package configuration or build
+output is used. The clone is clean before and after all checks.
+
+| Check | Observed result |
+|---|---|
+| `just setup`, `just hooks`, provenance checks | Enforced lockfile resolution and hook installation passed. All three libraries resolve from Git at `53ee5ec`, version `0.1.0-dev.2`; library checkouts are clean. |
+| `just generate` and generated-source diff | Passed; committed Drift source is unchanged. |
+| `just dry` | Passed formatting, analysis, architecture/design, secret/advisory checks, 52 Flutter + 22 core tests, and macOS release build. |
+| `just live` | All 10 real-adapter/runtime scenarios passed. |
+| `just native-test`, `just native-echo` | Both native flows passed. Foreground-launch warning remains an automated-test limitation. |
+| `just native-echo-release`, then `just build` | Real release Echo/history probe passed; production entrypoint restored. Built production entitlements include `com.apple.security.network.client`. |
+| Final provenance and `git status --porcelain` | Passed; lockfile, generated versions and all tracked sources unchanged; no untracked files. Owned fixtures removed. |
+| [Hosted Dry gates](https://github.com/Lightbridge-KS/dimsedash/actions/runs/39249838352) | Both `dry (macos-15)` and `dry (ubuntu-24.04)` passed on implementation commit `40b1563`, including generated-source parity and release builds. |
+
+The 110 non-documentation runtime/test/tool/manifest/native and supporting files
+in this commit match the previously verified released-dependency snapshot by
+content hash. Earlier Ubuntu Xvfb/live/release evidence therefore has identical
+source inputs, but remains snapshot/container evidence; hosted Ubuntu dry gates
+are independently tied to the implementation commit. No GNOME or physical-keyboard
+acceptance is inferred from either. The implementation receipt remains pinned to
+`40b1563`; evidence-only documentation updates use the normal push CI workflow.
+
+## Remaining acceptance
+
+- S0 real-keyboard/process-restart and stock Ubuntu 24.04 GNOME Wayland/Xorg
+  acceptance remain pending and deferred.
+- Manual desktop acceptance remains pending. Automated native/live checks do not
+  establish it.
+- Release signing/notarization, packaging and installed-artifact qualification
+  remain S8 work. No app release or later slice is included in this delivery.

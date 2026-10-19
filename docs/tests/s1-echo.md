@@ -149,3 +149,36 @@ flows and release networking/history probes, followed by production rebuilds.
 Linux used CPU emulation and Xvfb; the tracker records display/foreground warnings
 and deferred acceptance. The exact runtime/test/tool/manifests/native sources
 match the verified snapshot; final evidence-document edits do not change them.
+
+## Committed-clone receipt
+
+Implementation `40b15631e2dfd7c3c10de597be47f356934c0cbf` was cloned from the
+GitHub remote on 2026-10-19 and verified with a fresh package cache. Before/after
+Git status was clean. `just setup`, `just hooks`, provenance checks,
+`just generate` with parity validation, `just dry`, `just live`, both native
+flows, the release Echo/history probe and restored production build all passed.
+The [S1 tracker](../progress/s1-echo.md#landed-implementation-and-clean-clone-verification--2026-10-19)
+records exact platform limits and the [successful macOS/Linux CI run](https://github.com/Lightbridge-KS/dimsedash/actions/runs/39249838352).
+
+To reproduce from a landed revision, clone from the remote rather than copying a
+working tree. Select the implementation commit and use a separate package cache:
+
+```sh
+verification_root="$PWD/_playground/$(date +%F)_committed-check"
+mkdir -p "$verification_root"
+git clone https://github.com/Lightbridge-KS/dimsedash.git "$verification_root/clone"
+cd "$verification_root/clone"
+git checkout --detach 40b15631e2dfd7c3c10de597be47f356934c0cbf
+export PUB_CACHE="$verification_root/pub-cache"
+just setup
+just hooks
+fvm dart run tools/write_build_versions.dart --check
+just generate
+git diff --exit-code -- lib/adapters/persistence/database.g.dart
+```
+
+Then run the dry/live/native/release commands above with unoccupied fixture ports.
+After restoring the production entrypoint, recheck library source/provenance,
+`git diff --exit-code` and `git status --porcelain`. The status must remain empty.
+Manual keyboard/restart and stock GNOME Wayland/Xorg acceptance stay pending;
+successful automation or CI does not complete those checks.
