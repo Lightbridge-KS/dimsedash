@@ -24,7 +24,7 @@ The central design problem is coordinating **protocol outcomes, local receipt/st
 |---|---|
 | Product | Complete Find → Move/Get → receive → inspect preview; macOS/Linux parity; basic thumbnails |
 | UI/toolchain | Flutter/Dart, FVM SDK pin, just commands; approved compact blue Material workbench |
-| Protocol and image support | Public `dartdicom`, `dartdicom_net`, `dartdicom_pixel` APIs; source baseline `v0.1.0-dev.1` at `7f9a80d3a257a6936011250ce3e701b47b717385` |
+| Protocol and image support | Public `dartdicom`, `dartdicom_net`, `dartdicom_pixel` APIs; S1 dependency `v0.1.0-dev.2` at `53ee5ec9c204e58382bf9235a621eb05af8d4179`; original design review used `v0.1.0-dev.1` |
 | Persistent state | Approved local SQLite database for settings, saved nodes, permitted templates, history and receipt inventory; Drift/native SQLite adapter approved |
 | Files and transient data | User-selected DICOM folder; query datasets and thumbnails in bounded memory; JSON configuration interchange |
 | Settled architecture direction | Modular Hybrid Cleanish: root Flutter app, private Dart core, concrete adapters; Riverpod only in Flutter; one active outbound retrieve |
@@ -160,9 +160,9 @@ Existing public upstream APIs include `Association.sendCEcho`, `sendCFind`, `sen
 
 | Required observation | Baseline limitation / architecture response |
 |---|---|
-| Run/association/operation correlation | Incoming move-originator fields exist, but the high-level outbound operation does not expose a typed message-ID handle. Require upstream correlation events; retain unmatched/ambiguous receipts independently. |
-| Structured timeline and context results | Textual trace fields cannot supply a reliable lifecycle schema. Add typed observations upstream; unknown stages stay unobserved. |
-| Numeric rejection/abort/status and final Find outcome | Some negotiation/error detail is incomplete, and the Find result stream alone does not distinguish every terminal status. Use structured upstream outcomes rather than stream completion as universal success. |
+| Run/association/operation correlation | S1 uses caller-supplied association IDs and typed DIMSE message IDs in `v0.1.0-dev.2`. Incoming move-originator linkage and retrieve correlation still require slice-specific verification; retain unmatched/ambiguous receipts independently. |
+| Structured timeline and context results | S1 consumes typed observations and complete context results from `v0.1.0-dev.2`. Textual traces are not a lifecycle schema; verify later operation paths independently and keep unknown stages unobserved. |
+| Numeric rejection/abort/status and final Find outcome | S1 consumes numeric rejection/abort and Echo status facts from `v0.1.0-dev.2`. Verify Find terminal-status and cancellation semantics in S2; stream completion alone is not universal success. |
 | Counter presence | Retrieve progress currently defaults some missing counts to zero. Preserve optional presence upstream before using counters in diagnostic evidence. |
 | Supported text and images | Unknown charset fallback and unavailable compressed decoding cannot become promises of correct text or thumbnails. Surface explicit limits. |
 | Stop behavior | Current `StorageScp.close()` stops listening, aborts open associations and waits for serving work, including a sink write. Do not label that graceful draining. |
@@ -417,7 +417,7 @@ SQLite/files, session-only query data/thumbnails, independent receipt retention 
 
 ### Source evidence and limits
 
-The application is not implemented or verified. Upstream interfaces were rechecked against the same pinned commit while preparing this document. That source review does not rerun library interoperability or establish desktop support. Architecture diagrams express proposed contracts; upstream gaps above must be resolved or truthfully exposed before acceptance.
+The original design source review below used `v0.1.0-dev.1`; it did not establish desktop support. S0/S1 implementation and verification now have evidence in the [progress tracker](../progress/overview-first-preview.md). S1 consumes `v0.1.0-dev.2` typed observations and cleanup; later query/retrieve/receive contracts remain design targets requiring their own verification.
 
 - [Association API](https://github.com/Lightbridge-KS/dartdicom/blob/v0.1.0-dev.1/dartdicom_net/lib/src/association/association.dart): outbound operations, cancellation and C-GET sink.
 - [InstanceSink and ReceivedInstance](https://github.com/Lightbridge-KS/dartdicom/blob/v0.1.0-dev.1/dartdicom_net/lib/src/sink/instance_sink.dart): async/concurrent sink calls, dataset bytes, file metadata and move-originator fields.
@@ -432,3 +432,31 @@ The application is not implemented or verified. Upstream interfaces were recheck
 | 0.4 | 2026-10-18 | Define canonical exact-Identifier composition, model/level validation and separation from proposed local dataset checks |
 | 0.5 | 2026-10-18 | Record confirmed P0 Identifier editor and deferred local rules; cross-link surface design |
 | 0.6 | 2026-10-19 | Settle surface/structural choices; amend snapshot, subscription, failure, configuration and shutdown contracts via blueprint findings |
+
+## S1 execution contract
+
+The first Echo implementation admits one operation across the application.
+`OperationRunner` resolves a saved configuration revision, persists its permitted
+start summary, then dispatches through `DimseGateway`. `AppRuntime` owns the
+runner; Riverpod observes immutable snapshots. Disposing a screen or subscription
+has no authority over the association.
+
+Stop Echo cancels establishment or aborts an established association. There is no
+C-CANCEL-ECHO. Intent, observed response, release/abort and transport cleanup remain
+separate facts. The upstream `closed` future lets the adapter wait for actual
+resource cleanup before completing its run. It can fail when cleanup cannot be
+confirmed; force-close does not erase that recorded failure. The adapter bounds
+and handles the subsequent wait, retaining a cleanup warning. Outgoing DIMSE
+observations record first-PDU transport submission, not peer receipt or completion
+of all fragments. Missing peer parameters stay unknown; maximum PDU zero means
+unlimited. Status 0 followed by failed release
+becomes a diagnostic warning without changing the observed response. Close offers
+Stay or Stop and quit; bounded teardown leaves any unfinished durable record for
+startup reconciliation.
+
+Connection, association, DIMSE and idle timeout settings default to 30/30/30/60
+seconds and accept whole seconds from 1–600. Saving them affects future runs only.
+Typed observer callbacks contain no datasets, raw payloads or arbitrary peer text;
+observer exceptions cannot interrupt protocol handling. Full trace strings are
+never parsed to reconstruct facts. Implementation details and verification status
+are tracked in [S1](../progress/s1-echo.md).

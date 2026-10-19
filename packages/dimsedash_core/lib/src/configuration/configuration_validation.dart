@@ -18,6 +18,11 @@ Map<String, String> validateConfiguration(AppConfiguration config) {
 
   validateAe('callingAe', config.client.callingAe);
   validatePort('listenPort', config.client.listenPort);
+  for (final entry in config.client.timeouts.values.entries) {
+    if (entry.value < 1 || entry.value > 600) {
+      errors[entry.key] = 'Use whole seconds from 1 to 600.';
+    }
+  }
   final node = config.node;
   if (node != null) {
     if (node.label.trim().isEmpty || node.label.length > 100) {

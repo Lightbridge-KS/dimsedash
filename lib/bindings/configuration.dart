@@ -15,6 +15,21 @@ final configurationProvider =
 class ConfigurationController extends Notifier<AppConfiguration> {
   @override
   AppConfiguration build() => ref.read(initialConfigurationProvider);
+  Future<AppFailure?> changeNode(NodeCommand command) async {
+    final store = ref.read(configStoreProvider);
+    if (store is! NodeStore) {
+      return const AppFailure(FailureKind.storage, 'Node storage unavailable.');
+    }
+    final result = await (store as NodeStore).changeNode(command);
+    switch (result) {
+      case Success<AppConfiguration>(:final value):
+        state = value;
+        return null;
+      case Failure<AppConfiguration>(:final error):
+        return error;
+    }
+  }
+
   Future<AppFailure?> save(AppConfiguration draft) async {
     final result = await ref.read(configStoreProvider).save(draft);
     switch (result) {

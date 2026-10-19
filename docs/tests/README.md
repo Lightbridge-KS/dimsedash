@@ -80,3 +80,6 @@ portable entry point. CI invokes `just dry` and does not launch a desktop test.
 - The native configuration flow remains one end-to-end validation/save/runtime-
   reopen scenario. It uses a real desktop app and SQLite, but recreating its runtime
   does not prove an OS process restart or installed-package acceptance.
+
+S1 adds [Echo verification](s1-echo.md): `just live`, `just native-echo` and
+`just native-echo-release` use independently owned loopback fixtures.

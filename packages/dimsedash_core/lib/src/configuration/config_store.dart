@@ -8,3 +8,32 @@ abstract interface class ConfigStore {
   Future<Result<AppConfiguration>> save(AppConfiguration draft);
   Future<void> close();
 }
+
+abstract interface class NodeStore {
+  Future<Result<AppConfiguration>> changeNode(NodeCommand command);
+}
+
+sealed class NodeCommand {
+  const NodeCommand(this.expectedRevision);
+  final int expectedRevision;
+}
+
+final class AddNode extends NodeCommand {
+  const AddNode(super.expectedRevision, this.draft);
+  final PacsNode draft;
+}
+
+final class EditNode extends NodeCommand {
+  const EditNode(super.expectedRevision, this.node);
+  final PacsNode node;
+}
+
+final class SelectNode extends NodeCommand {
+  const SelectNode(super.expectedRevision, this.id);
+  final String? id;
+}
+
+final class RemoveNode extends NodeCommand {
+  const RemoveNode(super.expectedRevision, this.id);
+  final String id;
+}

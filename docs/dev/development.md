@@ -1,5 +1,5 @@
 ---
-summary: Reproducible S0 contributor setup, dependency pins, generated files, commands and version ownership.
+summary: Reproducible contributor setup, S1 released dependency pins, generated files, commands and version ownership.
 read_when:
   - building or testing DimseDash from a clean checkout
   - updating the SDK or dependencies
@@ -19,9 +19,9 @@ Resolved direct pins: Riverpod 3.4.3, Drift 2.35.2, drift_dev 2.35.1,
 sqlite3 3.7.1, build_runner 2.16.1, analyzer 13.3.0 and test 1.31.1.
 The analyzer/test/build-runner versions intentionally satisfy both Drift and the
 Flutter SDK's test_api pin. Newest versions are not necessarily mutually compatible.
-DICOM packages use the public `v0.1.0-dev.1` commit
-`7f9a80d3a257a6936011250ce3e701b47b717385`; the root override ensures one shared
-`dartdicom` value package. No local library checkout is needed.
+DICOM packages use the public `v0.1.0-dev.2` tag at
+`53ee5ec9c204e58382bf9235a621eb05af8d4179`; the root Git override ensures one
+shared `dartdicom` value package. S1 needs no local library checkout.
 
 Developer command versions verified for S0: just 1.53.0, prek 0.5.5,
 gitleaks 8.30.1. Hook hygiene tools pin pre-commit-hooks 6.0.0 through `uvx`.
@@ -101,3 +101,43 @@ branches, exports, normalized paths, part ownership, private APIs and core
 manifest dependencies. Tests may instantiate concrete adapters. Extend its explicit
 module policy with the blueprint when adding a capability; do not weaken it to make
 a forbidden import pass.
+
+## S1 dependencies and diagnostic provenance
+
+All three DICOM libraries resolve from the GitHub-only `v0.1.0-dev.2` tag to
+`53ee5ec9c204e58382bf9235a621eb05af8d4179`. The root `dartdicom` Git override
+aligns the library's transitive dependency with the pure-Dart core's Git source;
+it is required and must remain a Git source. A sibling checkout is not required.
+
+For an intentional upstream change, update every Git ref in the root and core
+manifests together, resolve the workspace lockfile and regenerate provenance.
+An ignored `pubspec_overrides.yaml` may support paired development, but must be
+disabled for delivery verification. Never commit filesystem overrides or a
+lockfile containing them. Enforce the lockfile again with `just setup` and check
+that `.dart_tool/package_config.json` points all three libraries into the Git
+cache at the recorded revision. The [S1 runbook](../tests/s1-echo.md) records
+isolated-source verification separately from a committed clean clone.
+
+`just versions` derives diagnostic app/library versions from manifests and the
+resolved library Git source, including a `-dirty` marker during paired work.
+`lib/app/build_versions.dart` is generated; regenerate it when versions or the
+resolved source change. The app manifest remains the version authority.
+
+## S1 schema and run recovery
+
+Schema v2 preserves all v1 configuration and adds timeout fields, run summaries
+and typed events. Before upgrading a file database, startup uses SQLite
+`VACUUM INTO` to create one consistent `dimsedash.sqlite.recovery` copy, including
+committed WAL content. Migration and integrity validation are transactional. The
+copy is removed only after successful migration/configuration loading; a retained
+copy blocks subsequent startup writes and requires explicit recovery. No automatic
+reset, downgrade or recovery-copy deletion is offered.
+
+Runs are recorded before network dispatch. On restart, unfinished rows become
+`interrupted` with the **reconciliation time**, not a fabricated network end time.
+No run is replayed. History stores allowlisted facts only; saved node configuration
+is still potentially identifying. Node deletion clears its reference in history
+without deleting the historical summary or changing a live request.
+
+See the [Echo verification runbook](../tests/s1-echo.md) for independent loopback
+fixtures and native/release checks.

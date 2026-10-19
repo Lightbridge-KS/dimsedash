@@ -430,3 +430,28 @@ The [surface draft](03-surface-architecture.md) now shows file-versus-run lifeti
 | 0.4 | 2026-10-18 | Record editor approval and rule-engine deferral; link surface contracts without adding persistent query/rule tables |
 | 0.5 | 2026-10-19 | Reconcile snapshot ownership, disclosure lifetime, file-action leases and acknowledgement mapping with the codebase blueprint |
 | 0.6 | 2026-10-19 | Clarify ownership of the approved Settings connection fields and local AE default |
+
+## S1 persistence realization
+
+Schema v2 introduces global timeout columns plus `runs` and `run_events`.
+`RunSummary.toHistory` and `EchoObservation.toHistory` are explicit allowlists,
+separate from `ResolvedEchoRequest`. Configuration stores all nodes and a selected
+ID; selection advances the configuration revision but not node content revisions.
+Duplicate is an unsaved draft; saving assigns a new ID and selects it. Removing
+the selected node clears selection and nulls historical node links without
+removing runs.
+
+Terminal history is pruned at startup and completion to 30 days/1,000 runs.
+Event limits are 16 KiB per event, 4 MiB per run and 64 MiB across history; oldest
+detail is evicted first while terminal summaries remain. Active records are
+protected from terminal pruning, with their own detail window still bounded.
+The live persistence queue is also bounded. Live-window omissions, events dropped before persistence, and stored per-run
+detail eviction have separate counters. Future history views combine only the
+latter two; live-window losses overlap history and must not be added to them.
+A failed write marks completeness unknown rather than asserting that it persisted.
+
+An initial write failure prevents dispatch. A later write failure leaves live
+evidence and the observed protocol result intact, marks history unavailable and
+blocks subsequent starts until a write succeeds. Failed terminal persistence is
+retried before readmission. Unfinished records are reconciled as interrupted with
+explicit recovery-time provenance; recovery never sends network traffic.

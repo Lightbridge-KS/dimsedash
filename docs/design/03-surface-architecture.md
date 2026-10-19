@@ -304,3 +304,19 @@ The [codebase blueprint](../structure/01-codebase-blueprint.md#8-verb--action--d
 | 0.3 | 2026-10-19 | Link the blueprint and clarify subscription ownership, cancellation evidence and forced-exit recovery |
 | 0.4 | 2026-10-19 | Add client and selected-PACS Settings fields, explicit apply/discard behavior and client default identity |
 | 0.5 | 2026-10-19 | Record Settings design approval and link the vertical-slice implementation tracker |
+
+## S1 Echo surface realization
+
+The node sidebar supports local search, explicit selection, new/duplicate drafts,
+Settings-based edits and confirmed removal. Saving a draft selects its newly
+assigned ID; removing the selected node leaves no selected target. Settings reuse
+the connection fields and add global whole-second Echo timeouts. Applying them
+sends no traffic.
+
+Workbench exposes an explicit Run Echo button beside the resolved endpoint,
+calling/called AE and environment, plus Stop Echo while occupied. The latest run
+retains its own frozen target even after selection or Settings change. Summary,
+Timeline, Negotiation and typed Trace distinguish missing observations, numeric
+codes, local intent, protocol response, cleanup failure and omitted detail.
+Suggestions are labeled separately from observed facts. Echo success explicitly
+proves only the Verification exchange. Full historical browsing remains S7.

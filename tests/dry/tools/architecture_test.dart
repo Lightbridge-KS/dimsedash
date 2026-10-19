@@ -80,6 +80,27 @@ void main() {
       contains('direct declared dependency'),
     );
   });
+  test('operations may resolve configuration but not the reverse', () {
+    put(
+      'packages/dimsedash_core/lib/src/operations/echo.dart',
+      'import "../configuration/config.dart";',
+    );
+    expect(checkArchitecture(root), isEmpty);
+    put(
+      'packages/dimsedash_core/lib/src/configuration/config.dart',
+      'import "../operations/echo.dart";',
+    );
+    expect(checkArchitecture(root), isNotEmpty);
+  });
+  test('DICOM adapter cannot own persistence or presentation', () {
+    put('lib/adapters/dicom/gateway.dart', 'import "../persistence/db.dart";');
+    expect(checkArchitecture(root), isNotEmpty);
+    put(
+      'lib/adapters/dicom/gateway.dart',
+      'import "../../features/settings/view.dart";',
+    );
+    expect(checkArchitecture(root), isNotEmpty);
+  });
   test('empty app cannot give a green gate', () {
     Directory('${root.path}/lib').deleteSync(recursive: true);
     expect(checkArchitecture(root).join(), contains('not scaffolded'));

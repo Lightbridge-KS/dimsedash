@@ -1,5 +1,5 @@
 ---
-summary: First-preview implementation plan and durable vertical-slice tracker for DimseDash; approved design baseline, dependencies, acceptance gates, upstream readiness, evidence ledger and remaining release decisions. S0 implementation is in progress.
+summary: First-preview implementation plan and durable vertical-slice tracker for DimseDash; approved design baseline, dependencies, acceptance gates, upstream readiness, evidence ledger and remaining release decisions. S1 implementation and released dependency verification are complete locally; app commit/hosted CI and S0 native acceptance remain pending.
 read_when:
   - starting or resuming DimseDash implementation
   - choosing the next vertical slice or recording completion evidence
@@ -8,7 +8,7 @@ read_when:
 
 # DimseDash — First-preview implementation tracker
 
-> Created: 2026-10-19 · Status: implementation sequence and design baseline approved; platform baseline approved · Implementation: S0 in progress
+> Created: 2026-10-19 · Status: implementation sequence and design baseline approved; platform baseline approved · Implementation: S1 implemented and verified against released dependencies; app delivery and S0 acceptance pending
 >
 > Inputs: [PRD](../req/dimsedash-prd.md) · [System](../design/01-system-architecture.md) · [Data](../design/02-data-architecture.md) · [Surface](../design/03-surface-architecture.md) · [Codebase blueprint](../structure/01-codebase-blueprint.md)
 
@@ -16,9 +16,11 @@ This is the durable implementation plan and status record. Architecture remains 
 
 ## Now / Next
 
-**Now:** the S0–S8 sequence and Study Root-only preview scope are approved (2026-10-19). The platform/distribution baseline is approved (2026-10-19). The updated Settings design is approved (2026-10-19), including editable calling/called AE titles, PACS IP/port, client listening port and `DIMSE_DASH` as the default local AE. S0 implementation is authorized and in progress; no later slice is active.
+**Now:** the S0–S8 sequence and Study Root-only preview scope are approved (2026-10-19). The platform/distribution baseline is approved (2026-10-19). The updated Settings design is approved (2026-10-19), including editable calling/called AE titles, PACS IP/port, client listening port and `DIMSE_DASH` as the default local AE. S1 is implemented in the uncommitted app working copy; upstream `v0.1.0-dev.2` is published and consumer dry/live/native/release checks against its Git pin passed in isolated source snapshots on both platforms. App commit/hosted CI and S0 native acceptance remain pending.
 
-**Active:** S0 — shell, persistent Settings, failure handling and executable gates are implemented. Automated UI/SQLite checks pass on macOS and Ubuntu 24.04 under Xvfb. Remaining native acceptance is pending and deferred for now (2026-10-19): real-keyboard/process-restart acceptance on macOS and stock Ubuntu 24.04 GNOME Wayland/Xorg acceptance. The support baseline is unchanged. See [S0 evidence/runbook](../tests/s0-configuration.md). S1 then makes Echo the first real network tracer bullet; Echo alone is not a public-preview release.
+**S0 acceptance pending:** S0 — shell, persistent Settings, failure handling and executable gates are implemented. Automated UI/SQLite checks pass on macOS and Ubuntu 24.04 under Xvfb. Remaining native acceptance is pending and deferred for now (2026-10-19): real-keyboard/process-restart acceptance on macOS and stock Ubuntu 24.04 GNOME Wayland/Xorg acceptance. The support baseline is unchanged. See [S0 evidence/runbook](../tests/s0-configuration.md). S1 then makes Echo the first real network tracer bullet; Echo alone is not a public-preview release.
+
+**Current review:** [S1 — node management and Echo](s1-echo.md). Paired implementation, automated dry/live/native evidence and remaining delivery steps are recorded there. DimseDash changes remain uncommitted for review; all DICOM dependency refs now target `v0.1.0-dev.2` at `53ee5ec9c204e58382bf9235a621eb05af8d4179`.
 
 **Preview finish line:** configure → Find → select one study/series/instance → review exact Identifier → C-GET or C-MOVE → receive/save → inspect headers and a supported thumbnail → inspect/export truthful evidence. The complete workflow must run in packaged macOS and Linux apps with failure, retention and restart behavior verified.
 
@@ -66,7 +68,7 @@ Evidence: [Flutter platform matrix](https://docs.flutter.dev/reference/supported
 | Slice | Operator-visible increment | Depends on | Primary PRD coverage | Status |
 |---|---|---|---|---|
 | S0 | Launch, configure and reopen | Initial platform baseline | R-01, R-15, R-17, R-18 | In progress |
-| S1 | Manage nodes and diagnose an Echo exchange | S0; U1 observations | R-01, R-02, R-11–R-13, R-15 | Not started |
+| S1 | Manage nodes and diagnose an Echo exchange | S0; U1 observations | R-01, R-02, R-11–R-13, R-15 | Implemented locally; delivery pending |
 | S2 | Find and inspect an exact study/series/instance subset | S1; U2 Find terminal evidence | R-03, R-04, R-09, R-12, R-16, R-19 | Not started |
 | S3 | Independently receive and durably save DICOM objects | S1; U3 storage contract | R-07, R-08, R-12, R-15, R-16 | Not started |
 | S4 | Retrieve a reviewed target through C-GET | S2 + S3; U2 retrieve evidence | R-04, R-06, R-08, R-12, R-19 | Not started |
@@ -97,12 +99,17 @@ S2 and S3 are structurally independent after S1, but the default execution order
 
 **Demo:** add/edit/duplicate/find/remove nodes, explicitly Echo a controlled peer, and distinguish success, association rejection and connection failure in the evidence pane.
 
-- [ ] Add complete P0 node management and selected-target/local-identity display; selecting a node sends nothing.
-- [ ] Implement OperationRunner/RunHandle, the DICOM adapter and typed results/events using U1. Freeze request/configuration; views only observe runtime-owned subscriptions.
-- [ ] Add summary/timeline/negotiation evidence from available structured observations. Show unknown when unavailable, preserve numeric status and separate facts from suggested causes.
-- [ ] Persist only allowlisted bounded run/event projections. Implement the approved age/count/byte/event limits and interrupted-run recovery as history first becomes durable; prove sensitive canaries cannot leak. Full history UI waits for S7.
-- [ ] Add a minimal reproducible synthetic peer/fixture setup with pinned dependencies and deterministic identities. Provide a clean-checkout demo path; an optional external Orthanc bundle profile cannot be the only test setup.
-- [ ] Verify success, rejection, timeout, explicit retry, provider rebuild/navigation and quit behavior. Live Echo and native app checks run on both platforms; no reuse of library-only results as app evidence.
+- [x] Add complete P0 node management and selected-target/local-identity display; selecting a node sends nothing.
+- [x] Implement OperationRunner/RunHandle, the DICOM adapter and typed results/events using U1. Freeze request/configuration; views only observe runtime-owned subscriptions.
+- [x] Add summary/timeline/negotiation evidence from available structured observations. Show unknown when unavailable, preserve numeric status and separate facts from suggested causes.
+- [x] Persist only allowlisted bounded run/event projections. Implement the approved age/count/byte/event limits and interrupted-run recovery as history first becomes durable; prove sensitive canaries cannot leak. Full history UI waits for S7.
+- [x] Add a minimal reproducible synthetic peer/fixture setup with pinned dependencies and deterministic identities. An external Orthanc bundle is not required.
+- [x] Verify success, rejection, timeout, explicit retry, provider rebuild/navigation and quit behavior. Live Echo and native app checks run on both platforms; no reuse of library-only results as app evidence.
+
+- [x] Verify released dependencies and the demo in isolated source snapshots on macOS and Ubuntu 24.04, including fresh resolution, dry/live/native/release checks without sibling overrides.
+- [ ] Record a committed S1 clean clone and hosted app CI after the uncommitted implementation is reviewed and landed.
+
+Detailed source/evidence state: [S1 tracker](s1-echo.md). Local implementation is verified; no S1 commit or full acceptance is claimed.
 
 **Exit:** one real explicit network command yields truthful, bounded evidence and a safe retained summary. Required structured evidence is available through public APIs; trace-string parsing is not a substitute.
 
@@ -191,11 +198,11 @@ S2 and S3 are structurally independent after S1, but the default execution order
 
 ## Upstream readiness lane
 
-This lane buys down library gaps alongside the first affected slice. It is not a separate whole-library refactor and does not authorize editing the dependency in this planning task. Recheck the pinned public API before opening focused upstream work. Consumer adapters can proceed against typed fakes, but affected real acceptance remains blocked until public observations are available and proven.
+This lane buys down library gaps alongside the first affected slice. It is not a separate whole-library refactor. Paired U1 implementation is authorized for S1; later upstream capabilities retain their own slice scope. Recheck the pinned public API before opening focused upstream work. Consumer adapters can proceed against typed fakes, but affected real acceptance remains blocked until public observations are available and proven.
 
 | Item | Required public contract / evidence | Needed for | State |
 |---|---|---|---|
-| U1 | Structured association lifecycle, available transport milestones, negotiation and numeric reject/abort data; source/provenance without parsing formatted trace | S1 | Not verified for app acceptance |
+| U1 | Structured association lifecycle, available transport milestones, negotiation and numeric reject/abort data; source/provenance without parsing formatted trace | S1 | Published in `v0.1.0-dev.2` at `53ee5ec`; consumer isolated-source dry/live/native/release checks passed |
 | U2 | Find final status, cancellation/abort distinction and retrieve counter presence; subscription cancellation completion is not cancellation proof | S2, S4 | Gap recorded in PRD/blueprint; implementation pending |
 | U3 | Receipt/association context, originator fields and sink acknowledgement behavior; concurrent save failure propagation | S3, S5 | Contract verification and any upstream delta pending |
 | U4 | Public grayscale rendering and explicit unsupported-charset/codec behavior; packaged Flutter display on both platforms; current grayscale decoding is pure Dart | S2 headers, S6 pixels | App/platform verification pending |
@@ -215,7 +222,7 @@ When work lands upstream, record issue/PR, release or commit pin, contract tests
 | Slice | Landed revision | Dry evidence | Live evidence | Native macOS / Linux | Acceptance |
 |---|---|---|---|---|---|
 | S0 | `fdaf6d4`; refactor `15dba15`, native harness `b8dee94` | 52 local dry tests pass; hosted macOS 15 and Ubuntu 24.04 dry jobs pass at `da80283` | No DIMSE work in scope | macOS automated native flow + release smoke / Ubuntu 24.04 Xvfb flow; GNOME acceptance pending | In progress — [evidence and remaining checks](../tests/s0-configuration.md) |
-| S1 | — | Not run | Not run | Not run / Not run | Pending |
+| S1 | Uncommitted app changes; upstream `53ee5ec` | Full dry gates, 52 Flutter + 22 core tests, Drift parity and release builds on both platforms against released Git dependencies | 10 runtime/adapter cases on each platform | macOS native configuration/Echo + release probe / Ubuntu 24.04.5 amd64 emulated Xvfb equivalents + release probe | Isolated-source verification passed; app commit/hosted CI and deferred desktop acceptance pending — [evidence](s1-echo.md) |
 | S2 | — | Not run | Not run | Not run / Not run | Pending |
 | S3 | — | Not run | Not run | Not run / Not run | Pending |
 | S4 | — | Not run | Not run | Not run / Not run | Pending |

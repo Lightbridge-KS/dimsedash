@@ -7,7 +7,9 @@ class AppRuntime {
     required this.configStore,
     required this.initial,
     required this.guard,
+    this.runner,
   });
+  final OperationRunner? runner;
   final ConfigStore configStore;
   final AppConfiguration initial;
   final ProcessGuard guard;
@@ -15,6 +17,7 @@ class AppRuntime {
   Future<void> close() => _closing ??= _close();
   Future<void> _close() async {
     try {
+      await runner?.shutdown();
       await configStore.close();
     } finally {
       await guard.close();

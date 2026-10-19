@@ -1,0 +1,131 @@
+import 'package:dimsedash/app/shell.dart';
+import 'package:dimsedash/bindings/configuration.dart';
+import 'package:dimsedash/bindings/echo.dart';
+import 'package:dimsedash_core/dimsedash_core.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import '../../operations/echo_test.dart' show Config, Runs, Gateway;
+
+void main() {
+  test(
+    'provider rebuild retains terminal evidence and never cancels execution',
+    () async {
+      final config = Config();
+      final gateway = Gateway();
+      final runner = OperationRunner(
+        configuration: config,
+        gateway: gateway,
+        store: Runs(),
+        newId: () => 'rebuild',
+        appVersion: 'test',
+        libraryVersion: 'test',
+      );
+      final container = ProviderContainer(
+        overrides: [operationRunnerProvider.overrideWithValue(runner)],
+      );
+      addTearDown(container.dispose);
+      final subscription = container.listen(echoStateProvider, (_, _) {});
+      addTearDown(subscription.close);
+      final handle = (await runner.start(1) as Success<RunHandle>).value;
+      container.invalidate(echoStateProvider);
+      gateway.calls.single.completer.complete(
+        const EchoOutcome(EchoDisposition.success, status: 0),
+      );
+      await handle.done;
+      expect(container.read(echoStateProvider).summary!.outcome!.status, 0);
+      expect(gateway.calls.single.stopped, isFalse);
+    },
+  );
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'Echo controls and evidence remain usable in ${brightness.name}',
+      (tester) async {
+        tester.view.physicalSize = const Size(1100, 850);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final config = Config();
+        final gateway = Gateway();
+        final runner = OperationRunner(
+          configuration: config,
+          gateway: gateway,
+          store: Runs(),
+          newId: () => 'test',
+          appVersion: 'test',
+          libraryVersion: 'test',
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              initialConfigurationProvider.overrideWithValue(config.value),
+              configStoreProvider.overrideWithValue(config),
+              operationRunnerProvider.overrideWithValue(runner),
+            ],
+            child: MaterialApp(
+              theme: ThemeData(brightness: brightness),
+              home: const WorkbenchShell(),
+            ),
+          ),
+        );
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+        expect(FocusManager.instance.primaryFocus, isNotNull);
+        await tester.tap(find.text('Duplicate'));
+        await tester.pumpAndSettle();
+        expect(
+          tester
+              .widget<TextField>(find.byKey(const ValueKey('label')))
+              .controller!
+              .text,
+          'CANARY_LABEL copy',
+        );
+        await tester.ensureVisible(find.text('Cancel'));
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+        expect(config.value.node!.id, 'node');
+        expect(gateway.calls, isEmpty);
+        await tester.tap(find.text('Remove'));
+        await tester.pumpAndSettle();
+        expect(find.text('Remove selected node?'), findsOneWidget);
+        await tester.tap(find.text('Keep node'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Run Echo'));
+        await tester.pumpAndSettle();
+        expect(find.text('Echo running'), findsOneWidget);
+        await tester.tap(find.widgetWithText(ListTile, 'Settings'));
+        await tester.pumpAndSettle();
+        expect(gateway.calls.single.stopped, isFalse);
+        final field = find.byKey(const ValueKey('dimse'));
+        await tester.ensureVisible(field);
+        await tester.enterText(field, '1.5');
+        await tester.ensureVisible(find.text('Apply connection'));
+        await tester.tap(find.text('Apply connection'));
+        await tester.pumpAndSettle();
+        expect(find.text('Use whole seconds from 1 to 600.'), findsOneWidget);
+        await tester.tap(find.widgetWithText(ListTile, 'Workbench'));
+        await tester.pumpAndSettle();
+        gateway.calls.single.observe(
+          EchoObservation(
+            sequence: 1,
+            elapsedMicros: 15,
+            kind: EvidenceKind.dimse,
+            command: 0x8030,
+            status: 0,
+          ),
+        );
+        gateway.calls.single.completer.complete(
+          const EchoOutcome(EchoDisposition.success, status: 0),
+        );
+        await tester.pumpAndSettle();
+        for (final name in ['Timeline', 'Negotiation', 'Trace', 'Summary']) {
+          await tester.tap(find.text(name));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+        }
+        expect(find.textContaining('Echo status: 0x0000'), findsOneWidget);
+      },
+    );
+  }
+}

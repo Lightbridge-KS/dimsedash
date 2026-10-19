@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../bindings/configuration.dart';
 import '../features/settings/settings_view.dart';
+import '../features/nodes/node_library.dart';
+import '../features/echo/echo_view.dart';
 
 class WorkbenchShell extends ConsumerStatefulWidget {
   const WorkbenchShell({super.key});
@@ -54,11 +56,23 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
             configuration: config,
             selectedPage: _page,
             onPageSelected: (page) => setState(() => _page = page),
+            onDraft: (draft) => showDialog<void>(
+              context: context,
+              builder: (context) => Dialog(
+                child: SizedBox(
+                  width: 740,
+                  height: 720,
+                  child: SettingsView(nodeDraft: draft),
+                ),
+              ),
+            ),
           ),
           const VerticalDivider(width: 1),
           Expanded(
             child: _page == 3
                 ? const SettingsView()
+                : _page == 0
+                ? const EchoView()
                 : _WorkflowPlaceholder(
                     icon: icon,
                     title: title,
@@ -77,8 +91,10 @@ class _WorkbenchSidebar extends StatelessWidget {
     required this.configuration,
     required this.selectedPage,
     required this.onPageSelected,
+    required this.onDraft,
   });
 
+  final ValueChanged<PacsNode> onDraft;
   final AppConfiguration configuration;
   final int selectedPage;
   final ValueChanged<int> onPageSelected;
@@ -107,39 +123,10 @@ class _WorkbenchSidebar extends StatelessWidget {
                           style: Theme.of(context).textTheme.labelMedium,
                         ),
                         const SizedBox(height: 12),
-                        if (configuration.node case final node?)
-                          Card(
-                            color: colors.primaryContainer,
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    node.label,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: colors.onPrimaryContainer,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(node.calledAe),
-                                  Text(
-                                    '${node.host} : ${node.port}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  Text(node.environment.name),
-                                ],
-                              ),
-                            ),
-                          )
-                        else
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Text('No saved nodes'),
-                          ),
+                        NodeLibrary(
+                          onDraft: onDraft,
+                          onEdit: () => onPageSelected(3),
+                        ),
                         const SizedBox(height: 16),
                         for (final (index, label, icon) in [
                           (0, 'Workbench', Icons.dashboard_outlined),

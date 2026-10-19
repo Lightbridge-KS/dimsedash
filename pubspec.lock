@@ -189,29 +189,29 @@ packages:
     dependency: "direct overridden"
     description:
       path: dartdicom
-      ref: "7f9a80d3a257a6936011250ce3e701b47b717385"
-      resolved-ref: "7f9a80d3a257a6936011250ce3e701b47b717385"
+      ref: "v0.1.0-dev.2"
+      resolved-ref: "53ee5ec9c204e58382bf9235a621eb05af8d4179"
       url: "https://github.com/Lightbridge-KS/dartdicom.git"
     source: git
-    version: "0.1.0-dev.1"
+    version: "0.1.0-dev.2"
   dartdicom_net:
     dependency: "direct main"
     description:
       path: dartdicom_net
-      ref: "7f9a80d3a257a6936011250ce3e701b47b717385"
-      resolved-ref: "7f9a80d3a257a6936011250ce3e701b47b717385"
+      ref: "v0.1.0-dev.2"
+      resolved-ref: "53ee5ec9c204e58382bf9235a621eb05af8d4179"
       url: "https://github.com/Lightbridge-KS/dartdicom.git"
     source: git
-    version: "0.1.0-dev.1"
+    version: "0.1.0-dev.2"
   dartdicom_pixel:
     dependency: "direct main"
     description:
       path: dartdicom_pixel
-      ref: "7f9a80d3a257a6936011250ce3e701b47b717385"
-      resolved-ref: "7f9a80d3a257a6936011250ce3e701b47b717385"
+      ref: "v0.1.0-dev.2"
+      resolved-ref: "53ee5ec9c204e58382bf9235a621eb05af8d4179"
       url: "https://github.com/Lightbridge-KS/dartdicom.git"
     source: git
-    version: "0.1.0-dev.1"
+    version: "0.1.0-dev.2"
   drift:
     dependency: "direct main"
     description:

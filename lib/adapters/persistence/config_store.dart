@@ -5,7 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import 'database.dart';
 
-class SqliteConfigStore implements ConfigStore {
+class SqliteConfigStore implements ConfigStore, NodeStore {
   SqliteConfigStore(this.database);
   final AppDatabase database;
   Future<void> _pending = Future.value();
@@ -42,6 +42,125 @@ class SqliteConfigStore implements ConfigStore {
       onError: (Object _, StackTrace _) {},
     );
     return operation;
+  }
+
+  @override
+  Future<Result<AppConfiguration>> changeNode(NodeCommand command) {
+    if (_closing != null) return Future.value(_storageFailure());
+    final operation = _pending.then((_) => _changeNode(command));
+    _pending = operation.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return operation;
+  }
+
+  Future<Result<AppConfiguration>> _changeNode(NodeCommand command) async {
+    try {
+      return await database.transaction(() async {
+        final current = await _read();
+        if (current.revision != command.expectedRevision) {
+          return const Failure<AppConfiguration>(
+            AppFailure(
+              FailureKind.conflict,
+              'Configuration changed. Reload before editing.',
+            ),
+          );
+        }
+        String? selected = current.selectedNodeId;
+        PacsNode? node;
+        switch (command) {
+          case AddNode(:final draft):
+            node = draft;
+          case EditNode(:final node):
+            final saved = current.nodes
+                .where((n) => n.id == node.id)
+                .firstOrNull;
+            if (saved == null || saved.revision != node.revision) {
+              return const Failure<AppConfiguration>(
+                AppFailure(
+                  FailureKind.conflict,
+                  'Node changed. Reload before editing.',
+                ),
+              );
+            }
+          case SelectNode(:final id):
+            if (id != null && !current.nodes.any((n) => n.id == id)) {
+              return const Failure<AppConfiguration>(
+                AppFailure(FailureKind.validation, 'Select a saved node.'),
+              );
+            }
+            selected = id;
+          case RemoveNode(:final id):
+            if (!current.nodes.any((n) => n.id == id)) {
+              return const Failure<AppConfiguration>(
+                AppFailure(FailureKind.conflict, 'Node no longer exists.'),
+              );
+            }
+            if (selected == id) {
+              selected = null;
+              await (database.update(
+                database.appSettings,
+              )..where((t) => t.id.equals(1))).write(
+                const AppSettingsCompanion(selectedNodeId: Value(null)),
+              );
+            }
+            await (database.delete(
+              database.nodes,
+            )..where((t) => t.id.equals(id))).go();
+        }
+        if (command is EditNode) node = command.node;
+        if (node != null) {
+          if (validateConfiguration(
+            AppConfiguration(client: current.client, node: node),
+          ).isNotEmpty) {
+            return const Failure<AppConfiguration>(
+              AppFailure(
+                FailureKind.validation,
+                'Correct the highlighted connection fields.',
+              ),
+            );
+          }
+          final id = command is AddNode ? const Uuid().v4() : node.id;
+          final old = current.nodes.where((n) => n.id == id).firstOrNull;
+          await database
+              .into(database.nodes)
+              .insertOnConflictUpdate(
+                NodesCompanion.insert(
+                  id: id,
+                  label: node.label,
+                  calledAe: node.calledAe,
+                  host: node.host,
+                  port: node.port,
+                  environment: node.environment.name,
+                  revision: _sameNode(old, node)
+                      ? old!.revision
+                      : (old?.revision ?? 0) + 1,
+                ),
+              );
+          if (command is AddNode) selected = id;
+        }
+        await database
+            .into(database.appSettings)
+            .insertOnConflictUpdate(
+              AppSettingsCompanion.insert(
+                id: const Value(1),
+                callingAe: current.client.callingAe,
+                listenPort: current.client.listenPort,
+                appearance: current.client.appearance.name,
+                revision: current.revision + 1,
+                selectedNodeId: Value(selected),
+                connectTimeout: Value(current.client.timeouts.connect),
+                associationTimeout: Value(current.client.timeouts.association),
+                dimseTimeout: Value(current.client.timeouts.dimse),
+                idleTimeout: Value(current.client.timeouts.idle),
+              ),
+            );
+        return Success(await _read());
+      });
+    } on SqliteException {
+      return _storageFailure();
+    }
   }
 
   @override
@@ -96,6 +215,10 @@ class SqliteConfigStore implements ConfigStore {
                 listenPort: draft.client.listenPort,
                 appearance: draft.client.appearance.name,
                 revision: current.revision + 1,
+                connectTimeout: Value(draft.client.timeouts.connect),
+                associationTimeout: Value(draft.client.timeouts.association),
+                dimseTimeout: Value(draft.client.timeouts.dimse),
+                idleTimeout: Value(draft.client.timeouts.idle),
                 selectedNodeId: Value(id),
               ),
             );
@@ -124,33 +247,43 @@ class SqliteConfigStore implements ConfigStore {
       database.appSettings,
     )..where((t) => t.id.equals(1))).getSingleOrNull();
     if (row == null) return const AppConfiguration();
-    final node = row.selectedNodeId == null
-        ? null
-        : await (database.select(
-            database.nodes,
-          )..where((t) => t.id.equals(row.selectedNodeId!))).getSingle();
+    final savedNodes = await database.select(database.nodes).get();
+    final nodes = savedNodes
+        .map(
+          (n) => PacsNode(
+            id: n.id,
+            label: n.label,
+            calledAe: n.calledAe,
+            host: n.host,
+            port: n.port,
+            environment: NodeEnvironment.values.byName(n.environment),
+            revision: n.revision,
+          ),
+        )
+        .toList();
     final configuration = AppConfiguration(
       client: ClientSettings(
         callingAe: row.callingAe,
         listenPort: row.listenPort,
         appearance: Appearance.values.byName(row.appearance),
+        timeouts: EchoTimeouts(
+          connect: row.connectTimeout,
+          association: row.associationTimeout,
+          dimse: row.dimseTimeout,
+          idle: row.idleTimeout,
+        ),
       ),
       revision: row.revision,
-      node: node == null
-          ? null
-          : PacsNode(
-              id: node.id,
-              label: node.label,
-              calledAe: node.calledAe,
-              host: node.host,
-              port: node.port,
-              environment: NodeEnvironment.values.byName(node.environment),
-              revision: node.revision,
-            ),
+      nodes: List.unmodifiable(nodes),
+      selectedNodeId: row.selectedNodeId,
     );
     if (validateConfiguration(configuration).isNotEmpty ||
         row.revision < 1 ||
-        (node != null && node.revision < 1)) {
+        nodes.any(
+          (n) =>
+              n.revision < 1 ||
+              validateConfiguration(AppConfiguration(node: n)).isNotEmpty,
+        )) {
       throw StateError('Invalid stored configuration.');
     }
     return configuration;

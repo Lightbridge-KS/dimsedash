@@ -1,0 +1,12 @@
+services:
+  orthanc:
+    image: orthancteam/orthanc:26.9.1
+    ports:
+      - "127.0.0.1:${DIMSEDASH_ORTHANC_PORT:-4242}:4242"
+    environment:
+      ORTHANC__DICOM_AET: PACS_AET
+      ORTHANC__DICOM_ALWAYS_ALLOW_ECHO: 'true'
+      ORTHANC__AUTHENTICATION_ENABLED: 'false'
+      ORTHANC__REMOTE_ACCESS_ALLOWED: 'false'
+    tmpfs:
+      - /var/lib/orthanc/db

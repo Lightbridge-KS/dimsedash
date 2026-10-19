@@ -5,7 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../bindings/configuration.dart';
 
 class SettingsView extends ConsumerStatefulWidget {
-  const SettingsView({super.key});
+  const SettingsView({super.key, this.nodeDraft});
+  final PacsNode? nodeDraft;
   @override
   ConsumerState<SettingsView> createState() => _SettingsViewState();
 }
@@ -28,6 +29,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       'calledAe',
       'host',
       'pacsPort',
+      'connect',
+      'association',
+      'dimse',
+      'idle',
     ]) {
       _controllers[key] = TextEditingController();
     }
@@ -48,7 +53,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text('Settings & storage', style: theme.textTheme.headlineSmall),
+        Text(
+          widget.nodeDraft == null ? 'Settings & storage' : 'New node draft',
+          style: theme.textTheme.headlineSmall,
+        ),
         const SizedBox(height: 8),
         const Text(
           'Connection settings are stored locally. Apply sends no network traffic.',
@@ -62,24 +70,25 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
               children: [
                 Text('DICOM connection', style: theme.textTheme.titleLarge),
                 const SizedBox(height: 20),
-                _ConnectionSection(
-                  header: Text(
-                    'Client node',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  fields: [
-                    _field('Calling AE Title', 'callingAe'),
-                    _field(
-                      'Client listening port · C-MOVE',
-                      'listenPort',
-                      number: true,
+                if (widget.nodeDraft == null)
+                  _ConnectionSection(
+                    header: Text(
+                      'Client node',
+                      style: theme.textTheme.titleMedium,
                     ),
-                  ],
-                  helperText: 'Default AE: DIMSE_DASH. This identity also serves the local receiver and C-MOVE destination. C-GET needs no separate listener.',
-                ),
+                    fields: [
+                      _field('Calling AE Title', 'callingAe'),
+                      _field(
+                        'Client listening port · C-MOVE',
+                        'listenPort',
+                        number: true,
+                      ),
+                    ],
+                    helperText: 'Default AE: DIMSE_DASH. This identity also serves the local receiver and C-MOVE destination. C-GET needs no separate listener.',
+                  ),
                 const Divider(height: 32),
                 _ConnectionSection(
-                  header: _base.node == null
+                  header: _base.node == null && widget.nodeDraft == null
                       ? CheckboxListTile(
                           contentPadding: EdgeInsets.zero,
                           title: const Text('Configure a remote PACS'),
@@ -113,14 +122,39 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   helperText: 'For C-MOVE, register the client AE, reachable address and listening port on the PACS. Applying these settings does not update that registration.',
                 ),
                 const Divider(height: 32),
-                _EnumSettingField<Appearance>(
-                  label: 'Appearance',
-                  value: _appearance,
-                  values: Appearance.values,
-                  onChanged: _saving
-                      ? null
-                      : (value) => setState(() => _appearance = value!),
-                ),
+                if (widget.nodeDraft == null) ...[
+                  Text(
+                    'Global Echo timeouts · seconds',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    children: [
+                      for (final key in [
+                        'connect',
+                        'association',
+                        'dimse',
+                        'idle',
+                      ])
+                        _field(
+                          '${key[0].toUpperCase()}${key.substring(1)} timeout',
+                          key,
+                          number: true,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  _EnumSettingField<Appearance>(
+                    label: 'Appearance',
+                    value: _appearance,
+                    values: Appearance.values,
+                    onChanged: _saving
+                        ? null
+                        : (value) => setState(() => _appearance = value!),
+                  ),
+                ],
                 const SizedBox(height: 20),
                 if (_message != null)
                   Semantics(
@@ -138,6 +172,13 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       onPressed: _saving ? null : _save,
                       child: Text(_saving ? 'Saving…' : 'Apply connection'),
                     ),
+                    if (widget.nodeDraft != null)
+                      TextButton(
+                        onPressed: _saving
+                            ? null
+                            : () => Navigator.pop(context),
+                        child: const Text('Cancel'),
+                      ),
                     OutlinedButton(
                       onPressed: _saving ? null : () => setState(_restore),
                       child: const Text('Discard edits'),
@@ -150,7 +191,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         ),
         const SizedBox(height: 12),
         const Text(
-          'Receiver stopped. Networking and receiving will be available in a later preview.',
+          'Receiver stopped. Receiving will be available in a later preview.',
         ),
       ],
     );
@@ -159,15 +200,18 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   void _restore() {
     _base = ref.read(configurationProvider);
     _appearance = _base.client.appearance;
-    _environment = _base.node?.environment ?? NodeEnvironment.test;
-    _hasNode = _base.node != null;
+    final node = widget.nodeDraft ?? _base.node;
+    _environment = node?.environment ?? NodeEnvironment.test;
+    _hasNode = node != null;
     final values = {
+      for (final entry in _base.client.timeouts.values.entries)
+        entry.key: '${entry.value}',
       'callingAe': _base.client.callingAe,
       'listenPort': '${_base.client.listenPort}',
-      'label': _base.node?.label ?? '',
-      'calledAe': _base.node?.calledAe ?? '',
-      'host': _base.node?.host ?? '',
-      'pacsPort': _base.node?.port.toString() ?? '',
+      'label': node?.label ?? '',
+      'calledAe': node?.calledAe ?? '',
+      'host': node?.host ?? '',
+      'pacsPort': node?.port.toString() ?? '',
     };
     for (final entry in values.entries) {
       _controllers[entry.key]!.text = entry.value;
@@ -185,6 +229,12 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         callingAe: value('callingAe'),
         listenPort: int.tryParse(value('listenPort')) ?? 0,
         appearance: _appearance,
+        timeouts: EchoTimeouts(
+          connect: int.tryParse(value('connect')) ?? 0,
+          association: int.tryParse(value('association')) ?? 0,
+          dimse: int.tryParse(value('dimse')) ?? 0,
+          idle: int.tryParse(value('idle')) ?? 0,
+        ),
       ),
       node: !_hasNode
           ? null
@@ -206,10 +256,15 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     if (errors.isNotEmpty) return;
     setState(() => _saving = true);
     try {
-      final failure = await ref
-          .read(configurationProvider.notifier)
-          .save(draft);
+      final controller = ref.read(configurationProvider.notifier);
+      final failure = widget.nodeDraft == null
+          ? await controller.save(draft)
+          : await controller.changeNode(AddNode(_base.revision, draft.node!));
       if (!mounted) return;
+      if (failure == null && widget.nodeDraft != null) {
+        Navigator.pop(context);
+        return;
+      }
       setState(() {
         if (failure == null) _restore();
         _message =

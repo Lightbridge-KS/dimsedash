@@ -18,11 +18,36 @@ class DimseDashApp extends ConsumerStatefulWidget {
 
 class _DimseDashAppState extends ConsumerState<DimseDashApp> {
   late final AppLifecycleListener _lifecycle;
+  final _navigator = GlobalKey<NavigatorState>();
   @override
   void initState() {
     super.initState();
     _lifecycle = AppLifecycleListener(
       onExitRequested: () async {
+        if (widget.runtime.runner?.active ?? false) {
+          final context = _navigator.currentContext;
+          if (context == null) return AppExitResponse.cancel;
+          final quit = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Echo is running'),
+              content: const Text(
+                'Stop Echo and close the application? Unfinished history is marked interrupted on restart.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Stay'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Stop and quit'),
+                ),
+              ],
+            ),
+          );
+          if (quit != true) return AppExitResponse.cancel;
+        }
         try {
           await widget.runtime.close().timeout(const Duration(seconds: 5));
         } catch (_) {
@@ -45,6 +70,7 @@ class _DimseDashAppState extends ConsumerState<DimseDashApp> {
       configurationProvider.select((c) => c.client.appearance),
     );
     return MaterialApp(
+      navigatorKey: _navigator,
       title: 'DimseDash',
       debugShowCheckedModeBanner: false,
       theme: workbenchTheme(Brightness.light),

@@ -424,3 +424,25 @@ This blueprint introduces no ADR: it reconciles the current pre-release design i
 | 0.1 | 2026-10-19 | Reconcile the three design lenses and framework behavior; record approved forks, source ownership, typed failures, verb/data mapping and enforceable invariants |
 | 0.2 | 2026-10-19 | Record blueprint approval and map the Settings connection fields to existing configuration ownership |
 | 0.3 | 2026-10-19 | Link the proposed implementation slices and durable evidence tracker |
+
+## S1 implemented source map
+
+- `core/configuration`: full node library, global timeouts, node commands and
+  optimistic configuration revisions; `duplicateNode` produces an unsaved draft.
+- `core/operations/echo.dart`: immutable execution/evidence types, `RunStore` and
+  `DimseGateway` ports, `OperationRunner` and `RunHandle`. Operations may depend on
+  configuration; the reverse dependency remains forbidden.
+- `adapters/dicom/echo_gateway.dart`: typed upstream observation/status conversion,
+  cancellation and cleanup. It does not import persistence or presentation.
+- `adapters/persistence`: schema v2, migration snapshot, configuration commands and
+  the allowlisted/retained run store.
+- `bindings/echo.dart`: immutable snapshots of a runtime-owned runner.
+- `features/nodes` and `features/echo`: node controls and diagnostic views.
+  Composition supplies the reusable Settings draft editor to node controls, so
+  feature modules do not import one another.
+- `tools/live`: independently owned loopback fixtures, native orchestration and a
+  release-only diagnostic probe separate from the production entrypoint.
+
+The generated app/library provenance file is derived from manifests and resolved
+Git source. Final dependency pins and native acceptance are tracked separately
+from local implementation in [S1](../progress/s1-echo.md).

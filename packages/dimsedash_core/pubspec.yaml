@@ -9,7 +9,7 @@ dependencies:
   dartdicom:
     git:
       url: https://github.com/Lightbridge-KS/dartdicom.git
-      ref: 7f9a80d3a257a6936011250ce3e701b47b717385
+      ref: v0.1.0-dev.2
       path: dartdicom
 dev_dependencies:
   lints: 6.1.0

@@ -6,6 +6,7 @@ import 'app/app.dart';
 import 'app/app_runtime.dart';
 import 'app/bootstrap.dart';
 import 'bindings/configuration.dart';
+import 'bindings/echo.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +18,7 @@ Future<void> main() async {
           retry: (_, _) => null,
           overrides: [
             configStoreProvider.overrideWithValue(value.configStore),
+            operationRunnerProvider.overrideWithValue(value.runner),
             initialConfigurationProvider.overrideWithValue(value.initial),
           ],
           child: DimseDashApp(runtime: value),

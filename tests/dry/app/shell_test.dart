@@ -31,8 +31,10 @@ void main() {
       ),
     );
     expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.text('Settings').first);
     await tester.tap(find.text('Settings').first);
     await tester.pumpAndSettle();
+    expect(find.byType(SettingsView), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
   for (final configured in [false, true]) {
@@ -70,7 +72,16 @@ void main() {
           find.text('Receiver unavailable in this build.'),
           findsOneWidget,
         );
-        final navigation = find.byType(ListTile);
+        final navigation = find.byWidgetPredicate(
+          (w) =>
+              w is ListTile &&
+              [
+                'Workbench',
+                'Received files',
+                'History',
+                'Settings',
+              ].contains((w.title as Text?)?.data),
+        );
         expect(
           tester
               .widgetList<ListTile>(navigation)
@@ -80,13 +91,6 @@ void main() {
         expect(tester.getTopLeft(navigation.first).dx, 16);
         expect(tester.getSize(navigation.first).width, 188);
         for (final (page, title, icon) in [
-          (
-            'Workbench',
-            configured
-                ? 'Connection configured'
-                : 'Configure your first connection',
-            Icons.hub_outlined,
-          ),
           ('Received files', 'No received files', Icons.folder_outlined),
           ('History', 'No run history', Icons.history),
         ]) {
@@ -166,9 +170,7 @@ void main() {
     await tester.pumpAndSettle();
     for (final text in [
       'Synthetic PACS',
-      'PACS_AET',
-      'pacs.example : 104',
-      'production',
+      'PACS_AET\npacs.example:104\nproduction',
       'TEST_CLIENT',
       'Port 11113',
       'No run history',
@@ -180,7 +182,7 @@ void main() {
     expect(store.saves, 1);
     await tester.tap(find.widgetWithText(ListTile, 'Workbench'));
     await tester.pumpAndSettle();
-    expect(find.text('Connection configured'), findsOneWidget);
+    expect(find.text('Echo · Verification'), findsOneWidget);
   });
   testWidgets(
     'shell discards abandoned Settings edits and retains reveal state',

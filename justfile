@@ -5,7 +5,7 @@ dart := env('DART_COMMAND', 'fvm dart')
 setup:
     {{flutter}} pub get --enforce-lockfile
 
-run:
+run: versions
     {{flutter}} run -d {{ if os() == 'macos' { 'macos' } else { 'linux' } }}
 
 generate:
@@ -36,7 +36,7 @@ audit:
 secrets:
     python3 tools/check_secrets.py
 
-build:
+build: versions
     {{flutter}} build {{ if os() == 'macos' { 'macos' } else { 'linux' } }} --release --no-pub
 
 # No PACS, container, paid runner, or remote service is started here.
@@ -47,3 +47,17 @@ native-test:
 
 hooks:
     prek install
+
+# Explicit, loopback-only service tests; excluded from ordinary dry CI.
+live:
+    python3 tools/live/run.py
+
+native-echo: versions
+    python3 tools/live/run.py --native
+
+versions:
+    {{dart}} run tools/write_build_versions.dart
+    {{dart}} format lib/app/build_versions.dart
+
+native-echo-release: versions
+    python3 tools/live/run.py --release

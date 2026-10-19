@@ -12,7 +12,14 @@ final class Failure<T> extends Result<T> {
   final AppFailure error;
 }
 
-enum FailureKind { validation, conflict, storage, newerSchema, alreadyOpen }
+enum FailureKind {
+  validation,
+  conflict,
+  storage,
+  newerSchema,
+  alreadyOpen,
+  busy,
+}
 
 final class AppFailure {
   const AppFailure(this.kind, this.message);
