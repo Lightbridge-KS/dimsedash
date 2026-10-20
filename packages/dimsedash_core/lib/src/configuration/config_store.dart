@@ -6,6 +6,13 @@ abstract interface class ConfigStore {
 
   /// Atomically saves client and selected node, rejecting a stale revision.
   Future<Result<AppConfiguration>> save(AppConfiguration draft);
+
+  /// Saves global settings only; preserves every node and the selection.
+  /// Rejects stale configuration revisions without merging or overwriting.
+  Future<Result<AppConfiguration>> saveClientSettings(
+    ClientSettings settings, {
+    required int expectedRevision,
+  });
   Future<void> close();
 }
 

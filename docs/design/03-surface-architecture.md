@@ -46,8 +46,9 @@ The workbench separates four kinds of information:
 
 ```mermaid
 flowchart TD
-    Shell["Desktop shell"] --> Nodes["Nodes and local identity"]
-    Shell --> Workbench["Workbench"]
+    Shell["Desktop shell"] --> Nodes["Nodes library"]
+    Nodes -->|Open card| Workbench["Node workbench"]
+    Workbench -->|All nodes| Nodes
     Workbench --> Echo["Echo"]
     Workbench --> Find["Find: Filters / Advanced / Identifier"]
     Find --> Results["Study, series and instance results"]
@@ -61,7 +62,7 @@ flowchart TD
 
 | Touchpoint | Actions and content | Boundary / requirement |
 |---|---|---|
-| Node sidebar | Search saved nodes; add/edit/duplicate/remove; select target; show local calling identity and environment | Selecting a node sends nothing. Edits affect future runs; R-01 |
+| Nodes dashboard | Search/filter saved nodes; card/list views; add/edit/duplicate/remove; open a target in Workbench | Selecting a node sends nothing. Edits affect future runs; R-01 |
 | Workbench operation header | Echo, Find, Retrieve; resolved target and calling AE; explicit run/cancel control | Changing operation does not terminate a run; R-02–R-06, R-12 |
 | Find composer | Model/level, friendly filters, advanced entries, resolved Identifier and query-plan limitations | P0 advanced editing, no local rule builder; R-03, R-19 |
 | Hierarchical result pane | Study → series → instance navigation, parent identifiers, row inspection and retrieval selection | Expanding a level issues an explicit Find action; R-04, R-09 |
@@ -74,32 +75,44 @@ flowchart TD
 
 ### Shell and panel behavior
 
-Preserve the approved compact blue shell: node/navigation rail on the left, operation workspace in the center, persistent receiver status, and run evidence below the workspace. Header inspection can open as a right-hand pane. There is one active composition context; editing another node does not overwrite the executed run being inspected.
+Preserve the approved compact blue shell: stable labeled navigation sidebar on the left, operation workspace in the center, persistent receiver status, and run evidence below the workspace. Header inspection can open as a right-hand pane. There is one active composition context; editing another node does not overwrite the executed run being inspected.
 
-Use labeled navigation destinations **Workbench**, **Received files**, **History** and **Settings**. Echo/Find/Retrieve are operations inside Workbench, not top-level data stores. C-MOVE/C-GET are method choices within Retrieve; each remains explicitly named in execution and evidence.
+Use labeled navigation destinations **Nodes**, **Received files**, **History** and **Settings**. A node card opens its nested workbench; All nodes returns to the preserved library. Echo/Find/Retrieve are operations inside Workbench, not top-level data stores. C-MOVE/C-GET are method choices within Retrieve; each remains explicitly named in execution and evidence.
 
-Pane dividers are resizable and keyboard operable. A collapsed pane has a visible reopen action. Proposed comfortable width is 1280 px; at narrower desktop widths the inspector becomes a sheet and the sidebar collapses before the main table loses essential columns. Tables scroll horizontally within their pane. Exact minimum dimensions and divider defaults require native prototype testing, not an invented release guarantee.
+Pane dividers are resizable and keyboard operable. A collapsed pane has a visible reopen action. Proposed comfortable width is 1280 px; at narrower desktop widths the inspector becomes a sheet and the labeled sidebar remains available and workspace content scrolls before essential columns are lost. Tables scroll horizontally within their pane. The initial desktop minimum is 760 × 600; adaptive card columns and scrollable sidebar/workspace support constrained windows. Future divider defaults still require native prototype testing.
 
-### Settings: DICOM connection
+### Settings: local DICOM settings
 
-**Approved Settings design (2026-10-19):** Settings contains an editable DICOM connection section, grouped by ownership:
+**Approved simplification (2026-10-20):** remote-node fields belong exclusively to
+Nodes → Add/Edit. Settings edits global client identity, listener port, Echo
+timeouts and appearance; it does not edit, create or select a remote node.
 
-| Group | Field | Behavior |
+| Group | Fields | Behavior |
 |---|---|---|
-| Client node | Calling AE Title | Default `DIMSE_DASH`, editable for testing another client identity; also the local receiver and C-MOVE destination AE in the initial single-identity setup |
-| Client node | Client listening port | Explicit local C-MOVE callback listener port; C-GET does not require this listener |
-| Selected remote node | Called AE Title | Remote PACS AE title; edits update the selected node, not a second global copy |
-| Selected remote node | PACS IP address and port | Remote connection endpoint; the prototype accepts IPv4/IPv6 literals |
+| Client node | Calling AE Title | Default `DIMSE_DASH`; also the local receiver and C-MOVE destination identity |
+| Client node | Client listening port | Local C-MOVE callback listener port; C-GET needs no separate listener |
+| Global Echo timeouts | Connect, association, DIMSE, idle | Whole seconds, 1–600; future runs use saved values |
+| Appearance | System, light, dark | Global display preference |
 
-Apply validates values and commits the draft explicitly; Discard restores the applied values. Applying never starts a listener, probes a node or updates the PACS configuration. The app persists these fields through ConfigStore as specified in the data design; the mockup keeps edits only for its browser session. Prototype listener port `11112` is an editable fixture, not a mandated deployment port.
+**Save settings** validates and commits only client settings using an optimistic
+configuration revision check. It preserves all node rows, node revisions and
+selection. Failures retain the entered draft; **Discard edits** explicitly reloads
+saved values, including after a conflict. Leaving Settings discards its draft.
+Saving sends no traffic and does not retarget active evidence or start a listener.
 
-The prototype requires an idle retrieve and stopped receiver before applying connection changes. Applied changes invalidate earlier query results/target selection without removing received files or retained history. Execution still freezes its connection configuration. Sidebar, workbench and retrieve review use the applied values. For C-MOVE, the PACS must independently map the destination AE to the reachable client address and port; a local listening port alone cannot establish that route.
+C-MOVE guidance sits beside the local identity/listener fields: the PACS must
+independently map the destination AE to the reachable client address and port.
+Saving local settings does not update that registration. Future retrieve/receiver
+slices must enforce their idle/stopped configuration restrictions; running Echo
+keeps its frozen configuration while later runs use the saved values.
 
-The [Settings screenshot](assets/workbench-v2-settings.png) captures the field grouping and default client identity.
+The earlier [Settings screenshot](assets/workbench-v2-settings.png) and Settings
+panel in `workbench-v2.html` are historical; their combined remote/local editor is
+superseded by this design.
 
 ## 3. Entry and onboarding
 
-First launch shows an empty node list and **Add node**, with a short explanation of Find → Retrieve → Inspect. No preconfigured real endpoint, startup probe, automatic listener or resumed association is present.
+First launch opens Nodes with an empty library and **Add node**, with a short explanation of Find → Retrieve → Inspect. No preconfigured real endpoint, startup probe, automatic listener or resumed association is present.
 
 1. **Add a node:** name, host, port, called AE and test/production designation. Show the currently configured calling AE. Validate syntax locally; do not call this a connectivity check.
 2. **Run Echo or Find:** Echo is optional, not an access gate. Offer a useful study filter; do not run an unbounded default query simply because a node was saved. Before an intentionally broad query, show its scope and the fact that a client cap cannot bound PACS work.
@@ -304,14 +317,42 @@ The [codebase blueprint](../structure/01-codebase-blueprint.md#8-verb--action--d
 | 0.3 | 2026-10-19 | Link the blueprint and clarify subscription ownership, cancellation evidence and forced-exit recovery |
 | 0.4 | 2026-10-19 | Add client and selected-PACS Settings fields, explicit apply/discard behavior and client default identity |
 | 0.5 | 2026-10-19 | Record Settings design approval and link the vertical-slice implementation tracker |
+| 0.6 | 2026-10-20 | Settle Option A Nodes dashboard, target picker, editor completion and receiver status alignment |
+| 0.7 | 2026-10-20 | Supersede separate Workbench/picker with nested Nodes navigation and run-ID evidence inspection |
+| 0.8 | 2026-10-20 | Limit Settings to global client configuration; remote editing belongs to Nodes |
 
 ## S1 Echo surface realization
 
-The node sidebar supports local search, explicit selection, new/duplicate drafts,
-Settings-based edits and confirmed removal. Saving a draft selects its newly
-assigned ID; removing the selected node leaves no selected target. Settings reuse
-the connection fields and add global whole-second Echo timeouts. Applying them
-sends no traffic.
+The approved [nested Nodes workbench](05-navigation-simplification.md) uses one
+Nodes destination, followed by Received files, History and Settings. Launch shows
+the library and restores selection without traffic. Nodes remains highlighted in
+both library and workbench; clicking it always returns to the library. All nodes
+preserves search, filter, density and scroll and restores card focus (heading
+fallback if unavailable). The receiver remains left-aligned informational text.
+
+Opening a node persists selection before navigating; the selected node opens
+without a redundant write. Add and Duplicate are unsaved drafts, whose successful
+save creates/selects an ID and opens Workbench. Edit preserves ID/revision and
+selection; errors retain values with explicit reload/discard recovery. Removal
+requires confirmation and clears selection without deleting history or evidence.
+Settings saves global client settings only, with whole-second timeouts and
+discard-on-navigation behavior. Remote fields are edited in Nodes only.
+
+The node heading shows its label, environment, called AE/endpoint and calling AE;
+Connection details expands the labeled timeouts. No Change node dialog remains.
+The shell owns explicit library, workspace and run-evidence inner views. Missing
+or externally changed workspace selection returns to the library; late selection
+completion cannot override subsequent navigation. Runtime owns execution.
+
+Matching-node current/latest evidence appears in the workbench. A changed revision,
+calling AE or timeouts produces a frozen-settings mismatch notice. Other targets
+show no retained evidence for that node. A running/latest Echo strip links to a
+run-ID evidence view without selecting its node; Back returns to its origin.
+Deleted-node evidence remains inspectable; replaced run IDs show unavailable detail.
+The run view permits Stop while active, never Run or retry. No per-node histories
+or additional retained details are introduced. Settings still discards abandoned
+edits when leaving, including for run inspection. Global admission remains occupied
+until cleanup, irrespective of navigation.
 
 Workbench exposes an explicit Run Echo button beside the resolved endpoint,
 calling/called AE and environment, plus Stop Echo while occupied. The latest run

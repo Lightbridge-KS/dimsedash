@@ -44,7 +44,9 @@ components:
 ## Overview
 
 The approved reference is the compact blue diagnostic workbench in
-`docs/design/assets/workbench-v2.html`, including the approved Settings screen.
+`docs/design/assets/workbench-v2.html`, with its earlier Settings panel now superseded by the global-only Settings design in `docs/design/03-surface-architecture.md`. Node-library navigation follows approved Option A in
+`docs/design/assets/navigation-options.html`; the earlier node-library comparison
+remains available for design history.
 The palette comes from the supplied Material Theme Builder blue theme. This
 extraction preserves that direction; it is not a new visual proposal.
 
@@ -66,10 +68,12 @@ monospace fallback. Text scaling remains enabled.
 
 ## Layout
 
-A navigation rail and persistent receiver status frame the workspace. Use
-{spacing.page} page padding and {spacing.field} between fields. Client identity
-and remote PACS fields have separate labeled groups. Narrow windows stack fields
-and keep scrolling local to the workspace.
+A stable labeled sidebar (Nodes, Received files, History, Settings)
+and persistent receiver status frame the workspace. Nodes is the initial destination; a card opens its nested workbench, with All nodes returning to the preserved library. Nodes stays selected in both views. Use
+{spacing.page} page padding and {spacing.field} between fields. Client identity is edited in Settings; remote PACS fields are edited in Nodes. Narrow windows stack fields
+and keep scrolling local to the workspace. At the 760 × 600 minimum, reduce card
+columns and allow sidebar scrolling if needed. Receiver status is a left-aligned
+icon-and-text row, aligned with its heading and identity; it is not a button.
 
 ## Elevation & Depth
 
@@ -83,9 +87,13 @@ across node, Settings and future query surfaces.
 
 ## Components
 
-The {components.primary-button} marks explicit Apply; Discard is secondary.
+The {components.primary-button} marks explicit Save settings or Save node; Discard is secondary.
 The {components.card} groups related settings. Every input has a persistent label
-and validation message. Unimplemented workflows show an honest explanatory state.
+and validation message. Node cards show label, called AE, endpoint, environment
+and a distinct Selected marker, with a separate action menu. List density, local
+search and environment filtering use the same records. Test/Production denotes
+configuration, never connectivity. The node heading shows environment, endpoint and calling AE once; Connection details expands the labeled timeouts. Workbench distinguishes current settings
+from the frozen executed target. Unimplemented workflows show an honest explanatory state.
 
 ## Do's and Don'ts
 

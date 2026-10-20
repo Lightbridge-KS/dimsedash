@@ -13,6 +13,7 @@ import 'package:integration_test/integration_test.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  WidgetController.hitTestWarningShouldBeFatal = true;
   testWidgets(
     'native Echo survives navigation and settings edits, then retries',
     (tester) async {
@@ -42,31 +43,92 @@ void main() {
             ),
           ),
         ) as Success<AppConfiguration>).value;
+        final store = runtime.configStore as NodeStore;
+        final added = (await store.changeNode(
+          AddNode(
+            saved.revision,
+            PacsNode(
+              id: '',
+              label: 'Second synthetic target',
+              calledAe: 'PACS_AET',
+              host: '127.0.0.1',
+              port: saved.node!.port,
+            ),
+          ),
+        ) as Success<AppConfiguration>).value;
+        final initial = (await store.changeNode(
+          SelectNode(added.revision, saved.node!.id),
+        ) as Success<AppConfiguration>).value;
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
               configStoreProvider.overrideWithValue(runtime.configStore),
-              initialConfigurationProvider.overrideWithValue(saved),
+              initialConfigurationProvider.overrideWithValue(initial),
               operationRunnerProvider.overrideWithValue(runtime.runner),
             ],
             child: DimseDashApp(runtime: runtime),
           ),
         );
         await tester.pumpAndSettle();
+        await tester.tap(find.byKey(ValueKey('open-node-${saved.node!.id}')));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Run Echo'));
         await tester.pumpAndSettle();
         expect(runtime.runner!.active, isTrue);
+        await tester.tap(find.text('All nodes'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(ValueKey('open-node-${added.node!.id}')));
+        for (
+          var i = 0;
+          i < 100 && find.text('All nodes').evaluate().isEmpty;
+          i++
+        ) {
+          await tester.pump(const Duration(milliseconds: 20));
+        }
+        await tester.pumpAndSettle();
+        expect(runtime.runner!.state.request!.node.id, saved.node!.id);
+        expect(
+          (await runtime.configStore.load() as Success<AppConfiguration>)
+              .value
+              .selectedNodeId,
+          added.node!.id,
+        );
+
         await tester.tap(find.widgetWithText(ListTile, 'Settings'));
         await tester.pumpAndSettle();
         final timeout = find.byKey(const ValueKey('dimse'));
         await tester.ensureVisible(timeout);
-        await tester.tap(timeout);
-        await tester.enterText(timeout, '1');
-        await tester.ensureVisible(find.text('Apply connection'));
-        await tester.tap(find.text('Apply connection'));
         await tester.pumpAndSettle();
+        await tester.tap(timeout);
+        await tester.pumpAndSettle();
+        await tester.enterText(timeout, '1');
+        await tester.pumpAndSettle();
+        expect(tester.widget<TextField>(timeout).controller!.text, '1');
+        await tester.ensureVisible(find.text('Save settings'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Save settings'));
+        await tester.pumpAndSettle();
+        for (
+          var i = 0;
+          i < 100 &&
+              find
+                  .text('Settings saved. No network request sent.')
+                  .evaluate()
+                  .isEmpty;
+          i++
+        ) {
+          await tester.pump(const Duration(milliseconds: 20));
+        }
+        expect(
+          (await runtime.configStore.load() as Success<AppConfiguration>)
+              .value
+              .client
+              .timeouts
+              .dimse,
+          1,
+        );
         expect(runtime.runner!.state.request!.client.timeouts.dimse, 6);
-        await tester.tap(find.widgetWithText(ListTile, 'Workbench'));
+        await tester.tap(find.text('View run'));
         await tester.pumpAndSettle();
         await tester.runAsync(() async {
           if (runtime.runner!.active) {
@@ -83,6 +145,10 @@ void main() {
           expect(tester.takeException(), isNull);
         }
         final id = runtime.runner!.state.summary!.id;
+        await tester.tap(find.widgetWithText(ListTile, 'Nodes'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(ValueKey('open-node-${added.node!.id}')));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Run Echo'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Stop Echo'));
@@ -95,6 +161,7 @@ void main() {
           }
         });
         expect(runtime.runner!.state.summary!.id, isNot(id));
+        expect(runtime.runner!.state.request!.node.id, added.node!.id);
         expect(runtime.runner!.state.summary!.stopRequested, isTrue);
       } finally {
         await tester.pumpWidget(const SizedBox.shrink());

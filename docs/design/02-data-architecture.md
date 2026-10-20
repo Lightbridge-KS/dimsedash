@@ -455,3 +455,11 @@ evidence and the observed protocol result intact, marks history unavailable and
 blocks subsequent starts until a write succeeds. Failed terminal persistence is
 retried before readmission. Unfinished records are reconciled as interrupted with
 explicit recovery-time provenance; recovery never sends network traffic.
+
+### Global-only Settings write (2026-10-20)
+
+`ConfigStore.saveClientSettings` saves only client identity, listener port,
+timeouts and appearance. A configuration revision check and transaction preserve
+all node rows, node revisions and selected-node ID. Settings does not call the
+legacy combined save. Explicit discard reloads durable configuration after a
+conflict; failed reload retains the draft. No schema migration is required.

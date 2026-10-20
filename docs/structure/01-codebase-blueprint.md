@@ -61,7 +61,7 @@ Installed SDKs and online documentation describe different versions. Scaffold wo
 
 Entries B-01–B-10 are indexed in the amended input documents. A subsequent structural refinement updates this document and the affected lens together. A change in product behavior requires a product decision; schema cost alone is not justification to delete a requirement.
 
-The approved Settings refinement uses ConfigStore: calling AE (default `DIMSE_DASH`) and client listening port belong to local configuration; called AE and PACS endpoint belong to the selected node. A single local AE also identifies the receiver and Move destination in P0. No new package or persistence store is needed.
+The approved Settings refinement uses `ConfigStore.saveClientSettings`: calling AE (default `DIMSE_DASH`), client listening port, timeouts and appearance belong to global configuration. This revision-checked write preserves every node and selection. Remote fields are edited only through Nodes commands; the legacy combined `save` remains available for compatibility. A single local AE also identifies the receiver and Move destination in P0. No new package or persistence store is needed.
 
 ## 3. Source layers and import rules
 
@@ -121,9 +121,10 @@ lib/
     disclosure_state.dart           Session masking/reveal state, never persisted
   ui/
     theme.dart                      Approved blue light/dark tokens
+    node_fields.dart                Shared remote-node fields and environment badge (S1 refinement)
     shared/                         Reusable Identifier editor, table/tree/pane/status/focus widgets
   features/
-    nodes/                          Node views/controller, validated configuration edits
+    nodes/                          Dashboard and explicit Add/Edit dialog
     query/                          Query composition, Identifier binding, results/navigation
     retrieve/                       Selection review, method/destination and start action
     receiver/                       Persistent status/details and explicit start/stop
@@ -344,7 +345,7 @@ These are action contracts, not a mandatory class per row. “Session” entries
 
 | Surface verbs | Action owner / contract | Fields or state reached |
 |---|---|---|
-| Add/edit/duplicate/remove/find node; Settings connection fields (calling/called AE, PACS IP/port, client listen port) | Nodes/settings presentation → ConfigStore | `nodes` revision/label/endpoint/environment; `app_settings` identity/listener policy |
+| Add/edit/duplicate/remove/find node; global local identity/listen port/timeouts | Nodes → NodeStore commands; Settings → ConfigStore.saveClientSettings | `nodes` revision/label/endpoint/environment; `app_settings` identity/listener policy |
 | Select node/operation, navigate/collapse/resize panes | Shell/presentation state | Selected node ID, operation, pane preferences; no network side effect |
 | Edit friendly/advanced tags, add sequence groups, validate/preview | Query policy + query presentation | Session IdentifierSpec, required keys, validation issues and resolved revision |
 | Run Echo/Find, navigate child query, clear results | OperationRunner + query policy | Run ID; immutable request; bounded QueryResultSet, parent UIDs and completeness; permitted `runs`/`run_events` |
@@ -424,6 +425,7 @@ This blueprint introduces no ADR: it reconciles the current pre-release design i
 | 0.1 | 2026-10-19 | Reconcile the three design lenses and framework behavior; record approved forks, source ownership, typed failures, verb/data mapping and enforceable invariants |
 | 0.2 | 2026-10-19 | Record blueprint approval and map the Settings connection fields to existing configuration ownership |
 | 0.3 | 2026-10-19 | Link the proposed implementation slices and durable evidence tracker |
+| 0.4 | 2026-10-20 | Add revision-checked global-only settings write preserving nodes and selection |
 
 ## S1 implemented source map
 
@@ -438,8 +440,17 @@ This blueprint introduces no ADR: it reconciles the current pre-release design i
   the allowlisted/retained run store.
 - `bindings/echo.dart`: immutable snapshots of a runtime-owned runner.
 - `features/nodes` and `features/echo`: node controls and diagnostic views.
-  Composition supplies the reusable Settings draft editor to node controls, so
-  feature modules do not import one another.
+  `node_library.dart` retains session search/filter/density/scroll, `node_editor.dart`
+  returns typed durable-save completion. The target picker has been removed.
+  Remote editor fields live in `ui/node_fields.dart`; Settings contains only
+  global client fields and remains independent of Nodes. The shell uses named destinations, explicit library/workspace/run inner views,
+  and navigation callbacks. Workspaces are keyed by node ID; evidence routes by
+  run ID, with an origin for Back and no selection write.
+  `features/echo/echo_evidence.dart` shares the existing evidence layout between
+  the workspace and the run inspection view.
+  Runtime ownership is unchanged. The global-only Settings refinement adds
+  `ConfigStore.saveClientSettings` with configuration revision checks and no
+  node writes; the schema and existing combined-save contract remain unchanged.
 - `tools/live`: independently owned loopback fixtures, native orchestration and a
   release-only diagnostic probe separate from the production entrypoint.
 

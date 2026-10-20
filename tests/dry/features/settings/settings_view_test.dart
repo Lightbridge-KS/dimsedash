@@ -9,307 +9,207 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../support/memory_config_store.dart';
 
-class _ControlledConfigStore implements ConfigStore {
+class _ControlledConfigStore extends MemoryConfigStore {
   final pending = Completer<Result<AppConfiguration>>();
-  AppConfiguration? draft;
-  int saves = 0;
-
+  ClientSettings? settings;
+  int? expectedRevision;
   @override
-  Future<Result<AppConfiguration>> load() async =>
-      const Success(AppConfiguration());
-
+  Future<Result<AppConfiguration>> save(AppConfiguration draft) =>
+      throw StateError('Settings must not use the combined node write.');
   @override
-  Future<Result<AppConfiguration>> save(AppConfiguration configuration) {
+  Future<Result<AppConfiguration>> saveClientSettings(
+    ClientSettings settings, {
+    required int expectedRevision,
+  }) {
     saves++;
-    draft = configuration;
+    this.settings = settings;
+    this.expectedRevision = expectedRevision;
     return pending.future;
   }
-
-  @override
-  Future<void> close() async {}
 }
 
-Future<void> _pumpSettings(
+const node = PacsNode(
+  id: 'node',
+  label: 'Synthetic PACS',
+  calledAe: 'PACS_AET',
+  host: '192.0.2.1',
+  port: 104,
+  revision: 4,
+);
+
+Future<void> pumpSettings(
   WidgetTester tester,
-  _ControlledConfigStore store, {
-  AppConfiguration configuration = const AppConfiguration(),
+  MemoryConfigStore store, {
+  Size size = const Size(1200, 1000),
+  Brightness brightness = Brightness.light,
+  double scale = 1,
 }) async {
-  tester.view.physicalSize = const Size(1200, 1000);
+  tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         configStoreProvider.overrideWithValue(store),
-        initialConfigurationProvider.overrideWithValue(configuration),
+        initialConfigurationProvider.overrideWithValue(store.value),
       ],
-      child: const MaterialApp(home: Scaffold(body: SettingsView())),
+      child: MaterialApp(
+        theme: ThemeData(brightness: brightness),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(scale)),
+          child: child!,
+        ),
+        home: const Scaffold(body: SettingsView()),
+      ),
     ),
   );
 }
 
-Future<void> _tap(WidgetTester tester, Finder finder) async {
-  await tester.ensureVisible(finder);
-  await tester.tap(finder);
-  await tester.pumpAndSettle();
+Future<void> tap(WidgetTester t, String text) async {
+  await t.ensureVisible(find.text(text).last);
+  await t.pumpAndSettle();
+  await t.tap(find.text(text).last);
+  await t.pumpAndSettle();
 }
 
-Future<void> _select<T extends Enum>(WidgetTester tester, T value) async {
-  await _tap(tester, find.byType(DropdownButtonFormField<T>));
-  await _tap(tester, find.text(value.name).last);
-}
-
-T? _selection<T extends Enum>(WidgetTester tester) => tester
-    .state<FormFieldState<T>>(find.byType(DropdownButtonFormField<T>))
-    .value;
-
-String _text(WidgetTester tester, String field) =>
-    tester.widget<TextField>(find.byKey(ValueKey(field))).controller!.text;
+String fieldText(WidgetTester t, String key) =>
+    t.widget<TextField>(find.byKey(ValueKey(key))).controller!.text;
 
 void main() {
+  for (final selected in [true, false]) {
+    testWidgets(
+      'global fields only with selected=$selected; saves preserve library',
+      (t) async {
+        final store = MemoryConfigStore()
+          ..value = AppConfiguration(
+            nodes: const [node],
+            selectedNodeId: selected ? 'node' : null,
+            revision: 7,
+          );
+        await pumpSettings(t, store);
+        expect(find.text('Local DICOM settings'), findsOneWidget);
+        expect(find.textContaining('For C-MOVE, register'), findsOneWidget);
+        expect(find.text('Remote PACS · selected node'), findsNothing);
+        expect(find.text('Configure a remote PACS'), findsNothing);
+        for (final key in ['label', 'calledAe', 'host', 'pacsPort']) {
+          expect(find.byKey(ValueKey(key)), findsNothing);
+        }
+        await t.enterText(
+          find.byKey(const ValueKey('callingAe')),
+          'TEST_CLIENT',
+        );
+        await tap(t, 'Save settings');
+        expect(store.saves, 1);
+        expect(store.value.client.callingAe, 'TEST_CLIENT');
+        expect(store.value.nodes.single, same(node));
+        expect(store.value.selectedNodeId, selected ? 'node' : null);
+        expect(store.value.revision, 8);
+        await t.enterText(find.byKey(const ValueKey('callingAe')), 'UNSAVED');
+        await tap(t, 'Discard edits');
+        expect(fieldText(t, 'callingAe'), 'TEST_CLIENT');
+        expect(store.saves, 1);
+      },
+    );
+  }
   testWidgets(
-    'Apply validates, saves explicitly, and Discard restores saved fields',
-    (tester) async {
-      tester.view.reset();
-      tester.view.physicalSize = const Size(1200, 1000);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
+    'without nodes validates client fields and never creates a node',
+    (t) async {
       final store = MemoryConfigStore();
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [configStoreProvider.overrideWithValue(store)],
-          child: const MaterialApp(home: Scaffold(body: SettingsView())),
-        ),
-      );
-      expect(store.saves, 0);
-      await tester.enterText(find.byKey(const ValueKey('callingAe')), 'A' * 17);
-      await tester.tap(find.text('Apply connection'));
-      await tester.pump();
+      await pumpSettings(t, store);
+      await t.enterText(find.byKey(const ValueKey('callingAe')), 'A' * 17);
+      await t.enterText(find.byKey(const ValueKey('listenPort')), '0');
+      await t.enterText(find.byKey(const ValueKey('dimse')), '1.5');
+      await tap(t, 'Save settings');
       expect(store.saves, 0);
       expect(find.textContaining('1–16 ASCII'), findsOneWidget);
-      await tester.enterText(
-        find.byKey(const ValueKey('callingAe')),
-        'TEST_CLIENT',
-      );
-      await tester.tap(find.text('Apply connection'));
-      await tester.pumpAndSettle();
-      expect(store.saves, 1);
-      expect(store.value.client.callingAe, 'TEST_CLIENT');
-      await tester.enterText(
-        find.byKey(const ValueKey('callingAe')),
-        'UNSAVED',
-      );
-      await tester.tap(find.text('Discard edits'));
-      await tester.pump();
-      expect(find.text('TEST_CLIENT'), findsOneWidget);
-      expect(store.saves, 1);
-    },
-  );
-
-  testWidgets('enum controls restore saved selections and Apply both values', (
-    tester,
-  ) async {
-    final store = _ControlledConfigStore();
-    await _pumpSettings(
-      tester,
-      store,
-      configuration: const AppConfiguration(
-        client: ClientSettings(appearance: Appearance.light),
-        node: PacsNode(
-          id: 'synthetic',
-          label: 'Synthetic PACS',
-          calledAe: 'PACS_AET',
-          host: 'pacs.example',
-          port: 104,
-          environment: NodeEnvironment.production,
-        ),
-      ),
-    );
-    expect(find.text('Configure a remote PACS'), findsNothing);
-    expect(find.text('Remote PACS · selected node'), findsOneWidget);
-    expect(
-      tester.widget(find.byType(DropdownButtonFormField<Appearance>)).key,
-      const ValueKey(Appearance.light),
-    );
-    expect(
-      tester.widget(find.byType(DropdownButtonFormField<NodeEnvironment>)).key,
-      const ValueKey(NodeEnvironment.production),
-    );
-    expect(
-      tester
-          .widget<DropdownButton<Appearance>>(
-            find.byType(DropdownButton<Appearance>),
-          )
-          .items!
-          .map((item) => item.value),
-      Appearance.values,
-    );
-    expect(
-      tester
-          .widget<DropdownButton<NodeEnvironment>>(
-            find.byType(DropdownButton<NodeEnvironment>),
-          )
-          .items!
-          .map((item) => item.value),
-      NodeEnvironment.values,
-    );
-    await _select(tester, Appearance.dark);
-    await _select(tester, NodeEnvironment.test);
-    await _tap(tester, find.text('Discard edits'));
-    expect(_selection<Appearance>(tester), Appearance.light);
-    expect(_selection<NodeEnvironment>(tester), NodeEnvironment.production);
-    expect(store.saves, 0);
-    await _select(tester, Appearance.dark);
-    await _select(tester, NodeEnvironment.test);
-    await _tap(tester, find.text('Apply connection'));
-    expect(store.saves, 1);
-    expect(store.draft!.client.appearance, Appearance.dark);
-    expect(store.draft!.node!.environment, NodeEnvironment.test);
-    store.pending.complete(Success(store.draft!));
-    await tester.pumpAndSettle();
-    expect(_selection<Appearance>(tester), Appearance.dark);
-    expect(_selection<NodeEnvironment>(tester), NodeEnvironment.test);
-    expect(
-      find.text('Connection saved. No network request sent.'),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets(
-    'remote visibility retains draft fields and errors until Discard',
-    (tester) async {
-      final store = _ControlledConfigStore();
-      await _pumpSettings(tester, store);
-      final checkbox = find.text('Configure a remote PACS');
-      final remoteHelp = find.textContaining(
-        'For C-MOVE, register the client AE',
-      );
-      expect(find.byKey(const ValueKey('label')), findsNothing);
-      expect(remoteHelp, findsNothing);
-      await _tap(tester, checkbox);
-      expect(remoteHelp, findsOneWidget);
-      for (final entry in {
-        'label': 'Draft PACS',
-        'calledAe': 'PACS_AET',
-        'host': 'pacs.example',
-        'pacsPort': '0',
-      }.entries) {
-        await tester.enterText(find.byKey(ValueKey(entry.key)), entry.value);
-      }
-      await _select(tester, NodeEnvironment.production);
-      await _tap(tester, find.text('Apply connection'));
       expect(find.text('Use a port from 1 to 65535.'), findsOneWidget);
-      expect(store.saves, 0);
-      await _tap(tester, checkbox);
-      expect(find.byKey(const ValueKey('label')), findsNothing);
-      expect(remoteHelp, findsNothing);
-      await _tap(tester, checkbox);
-      expect(_text(tester, 'label'), 'Draft PACS');
-      expect(_text(tester, 'calledAe'), 'PACS_AET');
-      expect(_text(tester, 'host'), 'pacs.example');
-      expect(_text(tester, 'pacsPort'), '0');
-      expect(_selection<NodeEnvironment>(tester), NodeEnvironment.production);
-      expect(find.text('Use a port from 1 to 65535.'), findsOneWidget);
-      await _tap(tester, find.text('Discard edits'));
-      expect(find.byKey(const ValueKey('label')), findsNothing);
-      await _tap(tester, checkbox);
-      expect(_text(tester, 'label'), isEmpty);
-      expect(_selection<NodeEnvironment>(tester), NodeEnvironment.test);
-      expect(find.text('Use a port from 1 to 65535.'), findsNothing);
-      expect(store.saves, 0);
+      expect(find.text('Use whole seconds from 1 to 600.'), findsOneWidget);
+      await tap(t, 'Discard edits');
+      await tap(t, 'Save settings');
+      expect(store.value.nodes, isEmpty);
+      expect(store.value.selectedNodeId, isNull);
     },
   );
-
-  testWidgets(
-    'pending save disables controls and failure preserves the draft',
-    (tester) async {
-      final store = _ControlledConfigStore();
-      await _pumpSettings(tester, store);
-      await _tap(tester, find.text('Configure a remote PACS'));
-      for (final entry in {
-        'label': 'Draft PACS',
-        'calledAe': 'PACS_AET',
-        'host': 'pacs.example',
-        'pacsPort': '104',
-      }.entries) {
-        await tester.enterText(find.byKey(ValueKey(entry.key)), entry.value);
-      }
-      await _select(tester, Appearance.dark);
-      await _select(tester, NodeEnvironment.production);
-      await _tap(tester, find.text('Apply connection'));
-      expect(store.saves, 1);
-      expect(find.text('Saving…'), findsOneWidget);
-      for (final field in tester.widgetList<TextField>(
-        find.byType(TextField),
-      )) {
-        expect(field.enabled, isFalse);
-      }
-      expect(
-        tester
-            .widget<CheckboxListTile>(find.byType(CheckboxListTile))
-            .onChanged,
-        isNull,
-      );
-      expect(
-        tester
-            .widget<DropdownButtonFormField<Appearance>>(
-              find.byType(DropdownButtonFormField<Appearance>),
-            )
-            .onChanged,
-        isNull,
-      );
-      expect(
-        tester
-            .widget<DropdownButtonFormField<NodeEnvironment>>(
-              find.byType(DropdownButtonFormField<NodeEnvironment>),
-            )
-            .onChanged,
-        isNull,
-      );
-      expect(
-        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-        isNull,
-      );
-      expect(
-        tester.widget<OutlinedButton>(find.byType(OutlinedButton)).onPressed,
-        isNull,
-      );
-      store.pending.complete(
-        const Failure(
-          AppFailure(FailureKind.storage, 'Synthetic storage failure.'),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Synthetic storage failure.'), findsOneWidget);
-      expect(_text(tester, 'label'), 'Draft PACS');
-      expect(_selection<Appearance>(tester), Appearance.dark);
-      expect(_selection<NodeEnvironment>(tester), NodeEnvironment.production);
-      expect(
-        tester
-            .widget<CheckboxListTile>(find.byType(CheckboxListTile))
-            .onChanged,
-        isNotNull,
-      );
-      expect(
-        tester
-            .widget<DropdownButtonFormField<Appearance>>(
-              find.byType(DropdownButtonFormField<Appearance>),
-            )
-            .onChanged,
-        isNotNull,
-      );
-      expect(
-        tester
-            .widget<DropdownButtonFormField<NodeEnvironment>>(
-              find.byType(DropdownButtonFormField<NodeEnvironment>),
-            )
-            .onChanged,
-        isNotNull,
-      );
-      await _tap(tester, find.text('Discard edits'));
-      expect(find.text('Synthetic storage failure.'), findsNothing);
-      expect(find.byKey(const ValueKey('label')), findsNothing);
-      expect(_selection<Appearance>(tester), Appearance.system);
-    },
-  );
+  for (final failure in [FailureKind.storage, FailureKind.conflict]) {
+    testWidgets(
+      'pending save disables controls; $failure preserves draft until discard',
+      (t) async {
+        final store = _ControlledConfigStore()
+          ..value = const AppConfiguration(
+            nodes: [node],
+            selectedNodeId: 'node',
+            revision: 9,
+          );
+        await pumpSettings(t, store);
+        await t.enterText(find.byKey(const ValueKey('callingAe')), 'UNSAVED');
+        await tap(t, 'Save settings');
+        expect(store.settings!.callingAe, 'UNSAVED');
+        expect(store.expectedRevision, 9);
+        expect(
+          t.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+          isNull,
+        );
+        expect(
+          t.widget<OutlinedButton>(find.byType(OutlinedButton)).onPressed,
+          isNull,
+        );
+        expect(
+          t
+              .widget<DropdownButtonFormField<Appearance>>(
+                find.byType(DropdownButtonFormField<Appearance>),
+              )
+              .onChanged,
+          isNull,
+        );
+        for (final field in t.widgetList<TextField>(find.byType(TextField))) {
+          expect(field.enabled, isFalse);
+        }
+        store.value = const AppConfiguration(
+          client: ClientSettings(callingAe: 'RELOADED'),
+          nodes: [node],
+          selectedNodeId: 'node',
+          revision: 10,
+        );
+        store.pending.complete(
+          Failure(AppFailure(failure, 'Synthetic failure.')),
+        );
+        await t.pumpAndSettle();
+        expect(fieldText(t, 'callingAe'), 'UNSAVED');
+        expect(find.text('Synthetic failure.'), findsOneWidget);
+        expect(store.saves, 1);
+        await tap(t, 'Discard edits');
+        expect(fieldText(t, 'callingAe'), 'RELOADED');
+        expect(find.text('Synthetic failure.'), findsNothing);
+      },
+    );
+  }
+  for (final brightness in Brightness.values) {
+    testWidgets(
+      'appearance saves and layout fits scaled minimum in $brightness',
+      (t) async {
+        final store = MemoryConfigStore();
+        await pumpSettings(
+          t,
+          store,
+          size: const Size(760, 600),
+          scale: 1.5,
+          brightness: brightness,
+        );
+        final appearance = find.byType(DropdownButtonFormField<Appearance>);
+        await t.ensureVisible(appearance);
+        await t.pumpAndSettle();
+        await t.tap(appearance);
+        await t.pumpAndSettle();
+        await tap(t, 'dark');
+        await tap(t, 'Save settings');
+        expect(store.value.client.appearance, Appearance.dark);
+        expect(
+          find.text('Settings saved. No network request sent.'),
+          findsOneWidget,
+        );
+        expect(t.takeException(), isNull);
+      },
+    );
+  }
 }

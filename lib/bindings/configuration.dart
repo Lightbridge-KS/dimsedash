@@ -30,6 +30,34 @@ class ConfigurationController extends Notifier<AppConfiguration> {
     }
   }
 
+  /// Explicit recovery after a conflict; never overwrites an editor draft.
+  Future<AppFailure?> reload() async {
+    final result = await ref.read(configStoreProvider).load();
+    switch (result) {
+      case Success<AppConfiguration>(:final value):
+        state = value;
+        return null;
+      case Failure<AppConfiguration>(:final error):
+        return error;
+    }
+  }
+
+  Future<AppFailure?> saveClientSettings(
+    ClientSettings settings, {
+    required int expectedRevision,
+  }) async {
+    final result = await ref
+        .read(configStoreProvider)
+        .saveClientSettings(settings, expectedRevision: expectedRevision);
+    switch (result) {
+      case Success<AppConfiguration>(:final value):
+        state = value;
+        return null;
+      case Failure<AppConfiguration>(:final error):
+        return error;
+    }
+  }
+
   Future<AppFailure?> save(AppConfiguration draft) async {
     final result = await ref.read(configStoreProvider).save(draft);
     switch (result) {

@@ -72,6 +72,8 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.tab);
         await tester.pump();
         expect(FocusManager.instance.primaryFocus, isNotNull);
+        await tester.tap(find.byKey(const ValueKey('node-menu-node')));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Duplicate'));
         await tester.pumpAndSettle();
         expect(
@@ -81,15 +83,19 @@ void main() {
               .text,
           'CANARY_LABEL copy',
         );
-        await tester.ensureVisible(find.text('Cancel'));
-        await tester.tap(find.text('Cancel'));
+        await tester.ensureVisible(find.text('Discard'));
+        await tester.tap(find.text('Discard'));
         await tester.pumpAndSettle();
         expect(config.value.node!.id, 'node');
         expect(gateway.calls, isEmpty);
-        await tester.tap(find.text('Remove'));
+        await tester.tap(find.byKey(const ValueKey('node-menu-node')));
         await tester.pumpAndSettle();
-        expect(find.text('Remove selected node?'), findsOneWidget);
+        await tester.tap(find.text('Remove node'));
+        await tester.pumpAndSettle();
+        expect(find.text('Remove CANARY_LABEL?'), findsOneWidget);
         await tester.tap(find.text('Keep node'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('open-node-node')));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Run Echo'));
         await tester.pumpAndSettle();
@@ -100,11 +106,11 @@ void main() {
         final field = find.byKey(const ValueKey('dimse'));
         await tester.ensureVisible(field);
         await tester.enterText(field, '1.5');
-        await tester.ensureVisible(find.text('Apply connection'));
-        await tester.tap(find.text('Apply connection'));
+        await tester.ensureVisible(find.text('Save settings'));
+        await tester.tap(find.text('Save settings'));
         await tester.pumpAndSettle();
         expect(find.text('Use whole seconds from 1 to 600.'), findsOneWidget);
-        await tester.tap(find.widgetWithText(ListTile, 'Workbench'));
+        await tester.tap(find.text('View run'));
         await tester.pumpAndSettle();
         gateway.calls.single.observe(
           EchoObservation(

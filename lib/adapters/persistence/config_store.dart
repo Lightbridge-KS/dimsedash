@@ -45,6 +45,25 @@ class SqliteConfigStore implements ConfigStore, NodeStore {
   }
 
   @override
+  Future<Result<AppConfiguration>> saveClientSettings(
+    ClientSettings settings, {
+    required int expectedRevision,
+  }) {
+    if (_closing != null) return Future.value(_storageFailure());
+    final operation = _pending.then(
+      (_) => _save(
+        AppConfiguration(client: settings, revision: expectedRevision),
+        clientOnly: true,
+      ),
+    );
+    _pending = operation.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return operation;
+  }
+
+  @override
   Future<Result<AppConfiguration>> changeNode(NodeCommand command) {
     if (_closing != null) return Future.value(_storageFailure());
     final operation = _pending.then((_) => _changeNode(command));
@@ -166,7 +185,10 @@ class SqliteConfigStore implements ConfigStore, NodeStore {
   @override
   Future<void> close() => _closing ??= _close();
 
-  Future<Result<AppConfiguration>> _save(AppConfiguration draft) async {
+  Future<Result<AppConfiguration>> _save(
+    AppConfiguration draft, {
+    bool clientOnly = false,
+  }) async {
     if (validateConfiguration(draft).isNotEmpty) {
       return const Failure(
         AppFailure(
@@ -186,8 +208,8 @@ class SqliteConfigStore implements ConfigStore, NodeStore {
             ),
           );
         }
-        final node = draft.node;
-        String? id;
+        final node = clientOnly ? null : draft.node;
+        String? id = clientOnly ? current.selectedNodeId : null;
         if (node != null) {
           id = current.node?.id ?? const Uuid().v4();
           await database

@@ -16,9 +16,18 @@ This is the durable implementation plan and status record. Architecture remains 
 
 ## Now / Next
 
-**Now:** the S0–S8 sequence and Study Root-only preview scope are approved (2026-10-19). The platform/distribution baseline is approved (2026-10-19). The updated Settings design is approved (2026-10-19), including editable calling/called AE titles, PACS IP/port, client listening port and `DIMSE_DASH` as the default local AE. S1 is landed on `main` at `40b1563`, using published upstream `v0.1.0-dev.2`. A fresh remote clone passed the macOS dry/live/native/release matrix and stayed clean; hosted macOS 15 and Ubuntu 24.04 dry gates passed on the implementation commit. Manual desktop acceptance, including the deferred S0 checks, remains pending.
+**Now:** the S0–S8 sequence and Study Root-only preview scope are approved (2026-10-19). The platform/distribution baseline is approved (2026-10-19). The Settings simplification is approved (2026-10-20): global local identity/listen port/timeouts/appearance belong to Settings, remote fields to Nodes; `DIMSE_DASH` remains the default local AE. S1 is landed on `main` at `40b1563`, using published upstream `v0.1.0-dev.2`. A fresh remote clone passed the macOS dry/live/native/release matrix and stayed clean; hosted macOS 15 and Ubuntu 24.04 dry gates passed on the implementation commit. Manual desktop acceptance, including the deferred S0 checks, remains pending.
 
 **S0 acceptance pending:** S0 — shell, persistent Settings, failure handling and executable gates are implemented. Automated UI/SQLite checks pass on macOS and Ubuntu 24.04 under Xvfb. Remaining native acceptance is pending and deferred for now (2026-10-19): real-keyboard/process-restart acceptance on macOS and stock Ubuntu 24.04 GNOME Wayland/Xorg acceptance. The support baseline is unchanged. See [S0 evidence/runbook](../tests/s0-configuration.md). S1 now provides Echo as the first real network tracer bullet; Echo alone is not a public-preview release.
+
+**Approved navigation refinement:** one Nodes entry now opens a nested workbench with All nodes return and run-ID evidence inspection. Local dry gates (71 Flutter / 22 core tests), native configuration/Echo and synthetic light/dark UI inspection passed. The earlier dashboard receipts and this refinement's results are recorded separately in [S1](s1-echo.md#nested-nodes-workbench--approved). Approved for main delivery on 2026-10-20; manual desktop acceptance remains pending.
+
+**Approved Settings simplification:** Settings now edits only global client
+identity, listening port, timeouts and appearance. Nodes owns remote editing.
+Global saves preserve node rows/revisions/selection. Local dry gates (76 Flutter /
+22 core tests), native configuration and native Echo passed; see
+[S1 evidence](s1-echo.md#global-only-settings--approved). All refinements are approved for main delivery on 2026-10-20; manual desktop
+acceptance stays pending.
 
 **Current evidence:** [S1 — node management and Echo](s1-echo.md) records implementation `40b1563`, committed-clone checks, hosted CI and remaining manual acceptance. All DICOM refs target `v0.1.0-dev.2` at `53ee5ec9c204e58382bf9235a621eb05af8d4179`. No later slice has started.
 
@@ -34,7 +43,7 @@ This is the durable implementation plan and status record. Architecture remains 
 - [x] Advanced Identifier editor included; local rule engine deferred.
 - [x] Surface choices approved: one target including instances, structured nested editor, mask-on-launch with separate thumbnail reveal.
 - [x] Codebase blueprint approved: typed results/events, feature UI/capability core/shared adapters, conceptual types plus enforceable invariants.
-- [x] Settings refinement approved: local identity/listen port separated from the selected remote node; explicit Apply/Discard and no implicit network action.
+- [x] Settings simplification approved: global-only Save settings/Discard edits; Nodes exclusively edits remote fields. Saving preserves nodes and selection and sends no traffic.
 
 These checks record approvals only. They are not application acceptance. Implementation discoveries that change a contract must update the owning design document and link the change here; do not silently change behavior to satisfy a test. No ADR is required for routine refinement of this unshipped design.
 
@@ -68,7 +77,7 @@ Evidence: [Flutter platform matrix](https://docs.flutter.dev/reference/supported
 | Slice | Operator-visible increment | Depends on | Primary PRD coverage | Status |
 |---|---|---|---|---|
 | S0 | Launch, configure and reopen | Initial platform baseline | R-01, R-15, R-17, R-18 | In progress |
-| S1 | Manage nodes and diagnose an Echo exchange | S0; U1 observations | R-01, R-02, R-11–R-13, R-15 | Implemented locally; delivery pending |
+| S1 | Manage nodes and diagnose an Echo exchange | S0; U1 observations | R-01, R-02, R-11–R-13, R-15 | S1 landed; navigation and Settings refinements approved for main delivery |
 | S2 | Find and inspect an exact study/series/instance subset | S1; U2 Find terminal evidence | R-03, R-04, R-09, R-12, R-16, R-19 | Not started |
 | S3 | Independently receive and durably save DICOM objects | S1; U3 storage contract | R-07, R-08, R-12, R-15, R-16 | Not started |
 | S4 | Retrieve a reviewed target through C-GET | S2 + S3; U2 retrieve evidence | R-04, R-06, R-08, R-12, R-19 | Not started |

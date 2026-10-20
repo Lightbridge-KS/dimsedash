@@ -3,9 +3,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../bindings/configuration.dart';
+import '../bindings/echo.dart';
 import '../features/settings/settings_view.dart';
 import '../features/nodes/node_library.dart';
 import '../features/echo/echo_view.dart';
+
+enum _Destination {
+  nodes('Nodes', Icons.dns_outlined),
+  files('Received files', Icons.folder_outlined),
+  history('History', Icons.history),
+  settings('Settings', Icons.settings_outlined);
+
+  const _Destination(this.label, this.icon);
+  final String label;
+  final IconData icon;
+}
+
+enum _NodePage { library, workspace, run }
+
+typedef _Location = ({
+  _Destination page,
+  _NodePage inner,
+  String? nodeId,
+  String? runId,
+});
+const _library = (
+  page: _Destination.nodes,
+  inner: _NodePage.library,
+  nodeId: null,
+  runId: null,
+);
 
 class WorkbenchShell extends ConsumerStatefulWidget {
   const WorkbenchShell({super.key});
@@ -14,30 +41,87 @@ class WorkbenchShell extends ConsumerStatefulWidget {
 }
 
 class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
-  int _page = 0;
+  _Location _location = _library;
+  _Location _runOrigin = _library;
+  bool _selecting = false;
+  int _navigation = 0, _restoreLibraryFocus = 0;
+  final _viewRunFocus = FocusNode(debugLabel: 'View run');
+
+  @override
+  void dispose() {
+    _viewRunFocus.dispose();
+    super.dispose();
+  }
+
+  void _navigate(_Location location, {bool restoreLibrary = false}) {
+    setState(() {
+      _navigation++;
+      _location = location;
+      if (restoreLibrary) _restoreLibraryFocus++;
+    });
+  }
+
+  void _allNodes() => _navigate(_library, restoreLibrary: true);
+
+  void _destination(_Destination page) {
+    if (page == _Destination.nodes) {
+      _navigate(_library);
+      return;
+    }
+    _navigate((
+      page: page,
+      inner: _NodePage.library,
+      nodeId: null,
+      runId: null,
+    ));
+  }
+
+  void _viewRun(String runId) {
+    // An obsolete run view may link to the newer retained run; preserve its origin.
+    if (_location.inner != _NodePage.run) _runOrigin = _location;
+    _navigate((
+      page: _Destination.nodes,
+      inner: _NodePage.run,
+      nodeId: null,
+      runId: runId,
+    ));
+  }
+
+  void _backFromRun() {
+    final config = ref.read(configurationProvider);
+    var origin = _runOrigin;
+    if (origin.inner == _NodePage.workspace &&
+        config.node?.id != origin.nodeId) {
+      origin = _library;
+    }
+    _navigate(origin, restoreLibrary: origin != _runOrigin);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _viewRunFocus.context != null) {
+        _viewRunFocus.requestFocus();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final config = ref.watch(configurationProvider);
+    ref.listen(configurationProvider, (_, next) {
+      if (_location.inner == _NodePage.workspace &&
+          next.node?.id != _location.nodeId) {
+        _allNodes();
+      }
+    });
     final reveal = ref.watch(revealProvider);
-    final (icon, title, description) = switch (_page) {
-      0 => (
-        Icons.hub_outlined,
-        config.node == null
-            ? 'Configure your first connection'
-            : 'Connection configured',
-        'Settings are ready. Echo and query workflows will be available in a later preview.',
-      ),
-      1 => (
-        Icons.folder_outlined,
-        'No received files',
-        'This workflow will be available in a later preview.',
-      ),
-      _ => (
-        Icons.history,
-        'No run history',
-        'This workflow will be available in a later preview.',
-      ),
-    };
+    final echo = ref.watch(echoStateProvider);
+    final atLibrary =
+        _location.page == _Destination.nodes &&
+        _location.inner == _NodePage.library;
+    final displaysEvidence =
+        _location.page == _Destination.nodes &&
+        ((_location.inner == _NodePage.workspace &&
+                echo.request?.node.id == _location.nodeId) ||
+            (_location.inner == _NodePage.run &&
+                echo.summary?.id == _location.runId));
     return Scaffold(
       appBar: AppBar(
         title: const Text('DimseDash'),
@@ -54,35 +138,132 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
         children: [
           _WorkbenchSidebar(
             configuration: config,
-            selectedPage: _page,
-            onPageSelected: (page) => setState(() => _page = page),
-            onDraft: (draft) => showDialog<void>(
-              context: context,
-              builder: (context) => Dialog(
-                child: SizedBox(
-                  width: 740,
-                  height: 720,
-                  child: SettingsView(nodeDraft: draft),
-                ),
-              ),
-            ),
+            selectedPage: _location.page,
+            onPageSelected: _destination,
           ),
           const VerticalDivider(width: 1),
           Expanded(
-            child: _page == 3
-                ? const SettingsView()
-                : _page == 0
-                ? const EchoView()
-                : _WorkflowPlaceholder(
-                    icon: icon,
-                    title: title,
-                    description: description,
-                    onOpenSettings: () => setState(() => _page = 3),
+            child: Column(
+              children: [
+                if (echo.summary != null && !displaysEvidence)
+                  Material(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${echo.active ? 'Echo running' : 'Latest Echo'} · ${echo.request?.node.label ?? 'Frozen target'}',
+                            ),
+                          ),
+                          TextButton(
+                            focusNode: _viewRunFocus,
+                            onPressed: () => _viewRun(echo.summary!.id),
+                            child: const Text('View run'),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Preserve only library presentation; abandoned Settings drafts are discarded.
+                      Offstage(
+                        offstage: !atLibrary,
+                        child: TickerMode(
+                          enabled: atLibrary,
+                          child: ExcludeFocus(
+                            excluding: !atLibrary,
+                            child: NodeLibrary(
+                              onOpen: _openNode,
+                              restoreFocus: _restoreLibraryFocus,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (!atLibrary)
+                        Positioned.fill(
+                          child: switch (_location.page) {
+                            _Destination.nodes => switch (_location.inner) {
+                              _NodePage.workspace => EchoView(
+                                key: ValueKey(_location.nodeId),
+                                nodeId: _location.nodeId!,
+                                onBack: _allNodes,
+                              ),
+                              _NodePage.run => EchoRunView(
+                                key: ValueKey(_location.runId),
+                                runId: _location.runId!,
+                                onBack: _backFromRun,
+                              ),
+                              _NodePage.library => const SizedBox.shrink(),
+                            },
+                            _Destination.settings => const SettingsView(),
+                            _Destination.files => _placeholder(
+                              Icons.folder_outlined,
+                              'No received files',
+                            ),
+                            _Destination.history => _placeholder(
+                              Icons.history,
+                              'No run history',
+                            ),
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _placeholder(IconData icon, String title) => _WorkflowPlaceholder(
+    icon: icon,
+    title: title,
+    description: 'This workflow will be available in a later preview.',
+    onOpenSettings: () => _destination(_Destination.settings),
+  );
+
+  Future<bool> _openNode(PacsNode node) async {
+    if (_selecting) return false;
+    final navigation = _navigation;
+    _selecting = true;
+    try {
+      final config = ref.read(configurationProvider);
+      if (config.selectedNodeId != node.id) {
+        final error = await ref
+            .read(configurationProvider.notifier)
+            .changeNode(SelectNode(config.revision, node.id));
+        if (!mounted || navigation != _navigation) return false;
+        if (error != null) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(error.message)));
+          return false;
+        }
+      }
+      if (!mounted ||
+          navigation != _navigation ||
+          ref.read(configurationProvider).node?.id != node.id) {
+        return false;
+      }
+      _navigate((
+        page: _Destination.nodes,
+        inner: _NodePage.workspace,
+        nodeId: node.id,
+        runId: null,
+      ));
+      return true;
+    } finally {
+      _selecting = false;
+    }
   }
 }
 
@@ -91,89 +272,78 @@ class _WorkbenchSidebar extends StatelessWidget {
     required this.configuration,
     required this.selectedPage,
     required this.onPageSelected,
-    required this.onDraft,
   });
-
-  final ValueChanged<PacsNode> onDraft;
   final AppConfiguration configuration;
-  final int selectedPage;
-  final ValueChanged<int> onPageSelected;
+  final _Destination selectedPage;
+  final ValueChanged<_Destination> onPageSelected;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return SizedBox(
-      width: 220,
-      child: Material(
-        color: colors.surfaceContainerLow,
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'DICOM NODES',
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                        const SizedBox(height: 12),
-                        NodeLibrary(
-                          onDraft: onDraft,
-                          onEdit: () => onPageSelected(3),
-                        ),
-                        const SizedBox(height: 16),
-                        for (final (index, label, icon) in [
-                          (0, 'Workbench', Icons.dashboard_outlined),
-                          (1, 'Received files', Icons.folder_outlined),
-                          (2, 'History', Icons.history),
-                          (3, 'Settings', Icons.settings_outlined),
-                        ])
-                          ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                            ),
-                            leading: Icon(icon),
-                            title: Text(label),
-                            selected: selectedPage == index,
-                            onTap: () => onPageSelected(index),
+  Widget build(BuildContext context) => SizedBox(
+    width: 220,
+    child: Material(
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Column(
+                    children: [
+                      for (final page in _Destination.values)
+                        ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
                           ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                          leading: Icon(page.icon),
+                          title: Text(page.label),
+                          selected: selectedPage == page,
+                          onTap: () => onPageSelected(page),
+                        ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Divider(),
                         const Text('LOCAL RECEIVER'),
                         Text(configuration.client.callingAe),
                         Text('Port ${configuration.client.listenPort}'),
-                        const SizedBox(height: 8),
-                        const Chip(
-                          materialTapTargetSize:
-                              MaterialTapTargetSize.shrinkWrap,
-                          avatar: Icon(Icons.stop_circle_outlined, size: 18),
-                          label: Text('Stopped'),
+                        const SizedBox(height: 12),
+                        Semantics(
+                          label: 'Local receiver stopped. Receiver unavailable in this build.',
+                          excludeSemantics: true,
+                          child: Row(
+                            key: ValueKey('receiver-status'),
+                            children: [
+                              Icon(Icons.stop_circle_outlined, size: 18),
+                              SizedBox(width: 8),
+                              Flexible(child: Text('Stopped')),
+                            ],
+                          ),
                         ),
+                        const SizedBox(height: 8),
                         const Text(
                           'Receiver unavailable in this build.',
                           style: TextStyle(fontSize: 12),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
 }
 
 class _WorkflowPlaceholder extends StatelessWidget {

@@ -4,9 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../bindings/configuration.dart';
 import '../../bindings/echo.dart';
+import '../../ui/node_fields.dart';
+import 'echo_evidence.dart';
 
 class EchoView extends ConsumerStatefulWidget {
-  const EchoView({super.key});
+  const EchoView({super.key, required this.nodeId, required this.onBack});
+  final String nodeId;
+  final VoidCallback onBack;
   @override
   ConsumerState<EchoView> createState() => _EchoViewState();
 }
@@ -20,170 +24,176 @@ class _EchoViewState extends ConsumerState<EchoView> {
     final runner = ref.watch(operationRunnerProvider);
     final state = ref.watch(echoStateProvider);
     final node = config.node;
-    return DefaultTabController(
-      length: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    final validTarget = node != null && node.id == widget.nodeId;
+    final ownsEvidence =
+        state.summary != null && state.request?.node.id == widget.nodeId;
+    return EchoEvidence(
+      state: ownsEvidence ? state : null,
+      emptyMessage: 'No retained Echo evidence for this node',
+      header: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: widget.onBack,
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('All nodes'),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
-              'Echo · Verification',
+              validTarget ? node.label : 'Node unavailable',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
-            const SizedBox(height: 12),
-            Text(
-              node == null
-                  ? 'Configure your first connection in Settings or add a node.'
-                  : '${node.label} · ${node.host}:${node.port} · Called ${node.calledAe}\nCalling ${config.client.callingAe} · ${node.environment.name} environment',
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 12,
-              children: [
-                FilledButton.icon(
-                  onPressed:
-                      node == null ||
-                          runner == null ||
-                          state.active ||
-                          _starting
-                      ? null
-                      : () async {
-                          setState(() {
-                            _starting = true;
-                            _error = null;
-                          });
-                          final result = await runner.start(config.revision);
-                          if (!mounted) return;
-                          setState(() {
-                            _starting = false;
-                            if (result case Failure<RunHandle>(:final error)) {
-                              _error = error.message;
-                            }
-                          });
-                        },
-                  icon: const Icon(Icons.play_arrow),
-                  label: Text(state.active ? 'Echo running' : 'Run Echo'),
-                ),
-                OutlinedButton(
-                  onPressed: state.active ? runner?.stop : null,
-                  child: const Text('Stop Echo'),
-                ),
-              ],
-            ),
-            if (_error != null)
-              Text(
-                _error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            if (!state.historyAvailable)
-              const Text(
-                'History unavailable. Live evidence is retained; further starts require storage recovery.',
-              ),
-            const SizedBox(height: 12),
-            const Text(
-              'Echo success proves only the verification exchange. It does not prove query, retrieval or storage support.',
-            ),
-            const TabBar(
-              isScrollable: true,
-              tabs: [
-                Tab(text: 'Summary'),
-                Tab(text: 'Timeline'),
-                Tab(text: 'Negotiation'),
-                Tab(text: 'Trace'),
-              ],
-            ),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  _summary(state),
-                  _lines(
-                    state.events.map(
-                      (e) =>
-                          '${(e.elapsedMicros / 1000).toStringAsFixed(1)} ms · ${e.direction.name} · ${e.kind.name}${_codes(e)}',
-                    ),
-                  ),
-                  _negotiation(state),
-                  _lines([
-                    'Typed observations only; no raw payloads or peer comments.',
-                    for (final e in state.events)
-                      '#${e.sequence} +${e.elapsedMicros}µs ${e.direction.name} ${e.kind.name}${_codes(e)}',
-                  ]),
-                ],
+            if (validTarget) NodeEnvironmentBadge(node.environment),
+          ],
+        ),
+        if (validTarget) Text('${node.calledAe} · ${node.host}:${node.port}'),
+        Text('Calling AE · ${config.client.callingAe}'),
+        ExpansionTile(
+          key: ValueKey('connection-details-${widget.nodeId}'),
+          tilePadding: EdgeInsets.zero,
+          title: const Text('Connection details'),
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Timeouts · connect ${config.client.timeouts.connect}s · association ${config.client.timeouts.association}s · DIMSE ${config.client.timeouts.dimse}s · idle ${config.client.timeouts.idle}s',
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _summary(EchoState state) {
-    final s = state.summary;
-    final request = state.request;
-    final observed = state.events.any(
-      (e) => e.kind == EvidenceKind.transportClosed,
-    );
-    return _lines(
-      s == null
-          ? ['No Echo has run. Saving settings sends no traffic.']
-          : [
-              'Run ${s.id}',
-              'Outcome: ${state.active ? 'running' : s.outcome?.disposition.name ?? 'unknown'}',
-              'Echo status: ${s.outcome?.status == null ? 'unobserved' : _hex(s.outcome!.status!)}',
-              'Failure: ${s.outcome?.failure?.name ?? 'none observed'}',
-              'Cleanup failure: ${s.outcome?.cleanupFailed ?? false}',
-              'Stop requested: ${state.stopRequested} · no C-CANCEL service exists for Echo',
-              'Transport termination: ${observed ? 'observed' : 'unobserved'}',
-              'Frozen target: ${request?.node.host}:${request?.node.port} · ${request?.node.calledAe}',
-              'Frozen calling AE: ${request?.client.callingAe} · node revision ${s.nodeRevision}',
-              'Started: ${s.started.toIso8601String()}',
-              'Elapsed: ${s.ended == null ? 'running' : '${(s.elapsedMicros ?? 0) / 1000} ms'}',
-              'Timeouts: ${s.timeouts.values}',
-              'Provenance: live protocol observations; connection timing includes name resolution.',
-              'Live detail omitted: ${state.omitted}; events dropped before persistence: ${state.historyDropped}. Missing facts are not inferred.',
-              'Suggested checks: verify address, port, AE registration and firewall when an exchange fails. These are suggestions, not observed causes.',
-            ],
-    );
-  }
-
-  Widget _negotiation(EchoState state) {
-    final negotiation = state.events
-        .where((e) => e.kind == EvidenceKind.associateAccept)
-        .lastOrNull;
-    final proposal = state.events
-        .where((e) => e.kind == EvidenceKind.associateRequest)
-        .lastOrNull;
-    return _lines([
-      'Peer maximum PDU: ${negotiation?.peerMaxPduLength ?? 'unobserved'}',
-      'Peer implementation class: ${negotiation?.peerImplementationClassUid ?? 'unobserved'}',
-      'Async invoked / performed: ${negotiation?.maxInvoked ?? 'unobserved'} / ${negotiation?.maxPerformed ?? 'unobserved'}',
-      'Implementation version text and unknown user-information bytes are deliberately omitted.',
-      for (final c
-          in (negotiation ?? proposal)?.contexts ?? <NegotiatedContext>[])
-        'Context ${c.id} · ${c.abstractSyntax}\nProposed: ${c.proposed.join(', ')}\nResult: ${c.result ?? 'unobserved'} · selected syntax: ${c.selected ?? 'unobserved'}',
-      if (negotiation == null) 'No accepted association observed.',
-    ]);
-  }
-
-  Widget _lines(Iterable<String> lines) => ListView(
-    padding: const EdgeInsets.symmetric(vertical: 16),
-    children: [
-      for (final line in lines)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: SelectableText(line),
+        if (ownsEvidence && _settingsDiffer(config, state))
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              'Current settings apply to the next run. Evidence retains the frozen run settings.',
+            ),
+          ),
+        const SizedBox(height: 12),
+        Text(
+          'Echo · Verification',
+          style: Theme.of(context).textTheme.titleMedium,
         ),
-    ],
-  );
-  String _codes(EchoObservation e) => [
-    if (e.timeoutPhase != null) 'timer=${e.timeoutPhase!.name}',
-    if (e.command != null) 'command=${_hex(e.command!)}',
-    if (e.status != null) 'status=${_hex(e.status!)}',
-    if (e.result != null) 'result=${e.result}',
-    if (e.source != null) 'source=${e.source}',
-    if (e.reason != null) 'reason=${e.reason}',
-  ].map((v) => ' $v').join();
-  String _hex(int code) =>
-      '0x${code.toRadixString(16).padLeft(4, '0').toUpperCase()}';
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          children: [
+            FilledButton.icon(
+              onPressed:
+                  !validTarget || runner == null || state.active || _starting
+                  ? null
+                  : () async {
+                      setState(() {
+                        _starting = true;
+                        _error = null;
+                      });
+                      final result = await runner.start(config.revision);
+                      if (!mounted) return;
+                      setState(() {
+                        _starting = false;
+                        if (result case Failure<RunHandle>(:final error)) {
+                          _error = error.message;
+                        }
+                      });
+                    },
+              icon: const Icon(Icons.play_arrow),
+              label: Text(state.active ? 'Echo running' : 'Run Echo'),
+            ),
+            if (ownsEvidence)
+              OutlinedButton(
+                onPressed: state.active
+                    ? () => _stopRun(ref, state.summary!.id)
+                    : null,
+                child: const Text('Stop Echo'),
+              ),
+          ],
+        ),
+        if (_error != null)
+          Text(
+            _error!,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        if (!state.historyAvailable)
+          const Text(
+            'History unavailable. Live evidence is retained; further starts require storage recovery.',
+          ),
+        const SizedBox(height: 12),
+        const Text(
+          'Echo success proves only the verification exchange. It does not prove query, retrieval or storage support.',
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  bool _settingsDiffer(AppConfiguration config, EchoState state) {
+    final request = state.request!;
+    return config.node?.revision != request.node.revision ||
+        config.client.callingAe != request.client.callingAe ||
+        config.client.timeouts.values.entries.any(
+          (e) => request.client.timeouts.values[e.key] != e.value,
+        );
+  }
+}
+
+/// Inspects one retained run without selecting its node or permitting a retry.
+class EchoRunView extends ConsumerWidget {
+  const EchoRunView({super.key, required this.runId, required this.onBack});
+  final String runId;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final latest = ref.watch(echoStateProvider);
+    final state = latest.summary?.id == runId ? latest : null;
+    return EchoEvidence(
+      state: state,
+      emptyMessage: 'This run detail is no longer retained.',
+      header: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: onBack,
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('Back'),
+          ),
+        ),
+        Text(
+          state == null
+              ? 'Echo run'
+              : 'Echo run · ${state.request?.node.label ?? 'Frozen target'}',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        Text('Run $runId'),
+        const Text(
+          'Frozen run evidence. Viewing this run does not change the next target.',
+        ),
+        if (state != null && !state.historyAvailable)
+          const Text(
+            'History unavailable. Live evidence is retained; further starts require storage recovery.',
+          ),
+        if (state?.active ?? false)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton(
+              onPressed: () => _stopRun(ref, runId),
+              child: const Text('Stop Echo'),
+            ),
+          ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+}
+
+// A callback retained through a rebuild must never stop a newer run.
+void _stopRun(WidgetRef ref, String runId) {
+  final runner = ref.read(operationRunnerProvider);
+  if (runner?.state.summary?.id == runId) runner?.stop();
 }

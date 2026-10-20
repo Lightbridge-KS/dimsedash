@@ -64,7 +64,7 @@ void main() {
           ),
         );
         expect(
-          find.text('No saved nodes'),
+          find.text('Add your first DICOM node'),
           configured ? findsNothing : findsOneWidget,
         );
         expect(find.text('Stopped'), findsOneWidget);
@@ -76,7 +76,7 @@ void main() {
           (w) =>
               w is ListTile &&
               [
-                'Workbench',
+                'Nodes',
                 'Received files',
                 'History',
                 'Settings',
@@ -86,7 +86,7 @@ void main() {
           tester
               .widgetList<ListTile>(navigation)
               .map((tile) => (tile.title! as Text).data),
-          ['Workbench', 'Received files', 'History', 'Settings'],
+          ['Nodes', 'Received files', 'History', 'Settings'],
         );
         expect(tester.getTopLeft(navigation.first).dx, 16);
         expect(tester.getSize(navigation.first).width, 188);
@@ -169,8 +169,6 @@ void main() {
     expect(failure, isNull);
     await tester.pumpAndSettle();
     for (final text in [
-      'Synthetic PACS',
-      'PACS_AET\npacs.example:104\nproduction',
       'TEST_CLIENT',
       'Port 11113',
       'No run history',
@@ -178,9 +176,11 @@ void main() {
     ]) {
       expect(find.text(text), findsOneWidget);
     }
-    expect(find.text('No saved nodes'), findsNothing);
+    expect(find.text('Add your first DICOM node'), findsNothing);
     expect(store.saves, 1);
-    await tester.tap(find.widgetWithText(ListTile, 'Workbench'));
+    await tester.tap(find.widgetWithText(ListTile, 'Nodes'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('open-node-synthetic')));
     await tester.pumpAndSettle();
     expect(find.text('Echo · Verification'), findsOneWidget);
   });

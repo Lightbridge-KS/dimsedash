@@ -74,7 +74,7 @@ IDs are introduced here because the acceptance scenarios below reference them. T
 
 | ID | Capability | Product behavior and boundary |
 |---|---|---|
-| R-01 | Saved nodes and local identity | Add, edit, duplicate, find and remove saved nodes; configure remote host/port/called AE and local calling AE. Settings exposes calling/called AE titles, PACS IP/port and the client listening port for C-MOVE. The editable local AE defaults to `DIMSE_DASH` and also identifies the local receiver/Move destination in the initial single-identity setup. Validate endpoint and AE-title input before execution. Display the resolved target and test/production designation. Listener bind address, port and accepted peers are explicit. |
+| R-01 | Saved nodes and local identity | Add, edit, duplicate, find and remove saved nodes; configure remote host/port/called AE and local calling AE. Nodes owns remote called AE, PACS IP/port, label and environment editing. Settings owns local calling AE, the client listening port for C-MOVE, global timeouts and appearance. Saving Settings preserves node content, revisions and selection. The editable local AE defaults to `DIMSE_DASH` and also identifies the local receiver/Move destination in the initial single-identity setup. Validate endpoint and AE-title input before execution. Display the resolved target and test/production designation. Listener bind address, port and accepted peers are explicit. |
 | R-02 | Echo | Run C-ECHO and show connection/association/DIMSE outcomes. Echo success establishes only that verification exchange, not query, storage or callback capability. |
 | R-03 | Find | Study Root C-FIND at STUDY, SERIES and IMAGE levels with level-appropriate matching keys and return keys. Stream results; distinguish no matches, failed query, cancellation and deliberately limited results. |
 | R-04 | Result navigation | Inspect study matches, find their series and instances, and select one study, series or instance for retrieval. Instance retrieval carries the complete Study/Series/SOP Instance UID hierarchy; multi-target batching is deferred. Retain the necessary parent identifiers rather than reconstructing a request from displayed labels. |
@@ -118,7 +118,7 @@ The approved concept is preserved as [standalone reference](assets/approved-work
 
 | Area | Approved direction | Detail to resolve in surface design |
 |---|---|---|
-| Shell | Compact desktop workbench with a node sidebar, operation workspace and evidence area | Exact resizing behavior, minimum window dimensions and shortcuts |
+| Shell | Compact desktop workbench with stable navigation, a Nodes library opening a nested node workbench with Back navigation, and evidence tied to its executed target | Future pane resizing and shortcuts; initial minimum 760 × 600 |
 | Receiver | Persistent local receiver identity/state; reachable across operations | Close/stop behavior with active transfers and preflight feedback |
 | Operation | Target and calling identity are legible; Find, C-MOVE and C-GET are distinct tasks | Query editor, result navigation and destination selection details |
 | Evidence | Prominent factual outcome; sequence beside peer counters and local receipt | Context-table placement and advanced-detail disclosure |
@@ -336,3 +336,4 @@ Use C4 flowcharts, class sketches and sequence diagrams for system design; ER/da
 | 0.7 | 2026-10-19 | Record approved surface and structural choices, single-instance retrieval with complete parent identifiers, and the linked codebase blueprint |
 | 0.8 | 2026-10-19 | Record blueprint approval and explicit Settings connection fields with DIMSE_DASH as the client AE default |
 | 0.9 | 2026-10-19 | Approve Study Root-only preview scope and vertical-slice plan; retain platform/distribution baseline as a pending recommendation |
+| 0.10 | 2026-10-20 | Separate global Settings from remote-node editing in Nodes |

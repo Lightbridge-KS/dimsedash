@@ -17,5 +17,28 @@ class MemoryConfigStore implements ConfigStore {
   }
 
   @override
+  Future<Result<AppConfiguration>> saveClientSettings(
+    ClientSettings settings, {
+    required int expectedRevision,
+  }) async {
+    if (expectedRevision != value.revision) {
+      return const Failure(
+        AppFailure(
+          FailureKind.conflict,
+          'Settings changed. Reload the saved configuration before applying.',
+        ),
+      );
+    }
+    saves++;
+    value = AppConfiguration(
+      client: settings,
+      nodes: value.nodes,
+      selectedNodeId: value.selectedNodeId,
+      revision: value.revision + 1,
+    );
+    return Success(value);
+  }
+
+  @override
   Future<void> close() async {}
 }
