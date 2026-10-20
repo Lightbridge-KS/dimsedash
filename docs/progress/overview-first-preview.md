@@ -26,8 +26,9 @@ This is the durable implementation plan and status record. Architecture remains 
 identity, listening port, timeouts and appearance. Nodes owns remote editing.
 Global saves preserve node rows/revisions/selection. Local dry gates (76 Flutter /
 22 core tests), native configuration and native Echo passed; see
-[S1 evidence](s1-echo.md#global-only-settings--approved). All refinements are approved for main delivery on 2026-10-20; manual desktop
-acceptance stays pending.
+[S1 evidence](s1-echo.md#global-only-settings--approved). All refinements are committed in `80ede60` on 2026-10-20. Pre-push checks and
+commit hooks passed; hosted CI for this refinement is not yet verified. Manual
+desktop acceptance stays pending.
 
 **Current evidence:** [S1 — node management and Echo](s1-echo.md) records implementation `40b1563`, committed-clone checks, hosted CI and remaining manual acceptance. All DICOM refs target `v0.1.0-dev.2` at `53ee5ec9c204e58382bf9235a621eb05af8d4179`. No later slice has started.
 
@@ -77,7 +78,7 @@ Evidence: [Flutter platform matrix](https://docs.flutter.dev/reference/supported
 | Slice | Operator-visible increment | Depends on | Primary PRD coverage | Status |
 |---|---|---|---|---|
 | S0 | Launch, configure and reopen | Initial platform baseline | R-01, R-15, R-17, R-18 | In progress |
-| S1 | Manage nodes and diagnose an Echo exchange | S0; U1 observations | R-01, R-02, R-11–R-13, R-15 | S1 landed; navigation and Settings refinements approved for main delivery |
+| S1 | Manage nodes and diagnose an Echo exchange | S0; U1 observations | R-01, R-02, R-11–R-13, R-15 | S1 landed; navigation and Settings refinements committed in `80ede60` |
 | S2 | Find and inspect an exact study/series/instance subset | S1; U2 Find terminal evidence | R-03, R-04, R-09, R-12, R-16, R-19 | Not started |
 | S3 | Independently receive and durably save DICOM objects | S1; U3 storage contract | R-07, R-08, R-12, R-15, R-16 | Not started |
 | S4 | Retrieve a reviewed target through C-GET | S2 + S3; U2 retrieve evidence | R-04, R-06, R-08, R-12, R-19 | Not started |

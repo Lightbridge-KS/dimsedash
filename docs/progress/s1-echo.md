@@ -11,6 +11,12 @@ Parent: [first-preview overview](overview-first-preview.md).
 
 ## Now / Next
 
+The approved Nodes dashboard, nested workbench and global-only Settings refinements
+are committed in `80ede60`. Pre-push formatting, analysis, 76 Flutter / 22 core
+tests, architecture/design, secret and dependency checks passed again; commit
+hooks passed. Native/release evidence is recorded below. Hosted CI for this
+refinement and deferred manual desktop acceptance are not yet verified.
+
 S1 is landed on `main` at [`40b1563`](https://github.com/Lightbridge-KS/dimsedash/commit/40b15631e2dfd7c3c10de597be47f356934c0cbf).
 A fresh clone from GitHub passed the complete macOS verification matrix and stayed
 clean. [Hosted CI](https://github.com/Lightbridge-KS/dimsedash/actions/runs/39249838352) passed on that exact commit for `macos-15` and
