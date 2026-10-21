@@ -101,3 +101,16 @@ from the frozen executed target. Unimplemented workflows show an honest explanat
 - Keep focus visible and every action reachable by keyboard.
 - Do not fabricate run results, connectivity status or a listening receiver.
 - Do not imply masking removes identifying data from stored DICOM objects.
+
+## Query preview
+
+Approved Option A places the full-width query composer above results inside the
+node workbench, with Echo / Query switching under the shared node header. Filters,
+Advanced Identifier and Resolved Identifier share a draft; Collapse is explicit.
+At narrow widths fields stack and tables scroll horizontally within their panel.
+
+The current Query implementation is labeled **UI preview · synthetic data · no
+network**. Fixed fixtures are distinct from live Echo evidence. Preview controls
+live in a disclosure; arbitrary tag/sequence editing is an illustrative sketch.
+Remote queries and retrieval remain pending. See
+[the Query preview tracker](docs/progress/query-ui-preview.md).

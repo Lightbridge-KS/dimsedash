@@ -48,10 +48,11 @@ void main() {
         addTearDown(tester.view.reset);
         final config = Config();
         final gateway = Gateway();
+        final runs = Runs();
         final runner = OperationRunner(
           configuration: config,
           gateway: gateway,
-          store: Runs(),
+          store: runs,
           newId: () => 'test',
           appVersion: 'test',
           libraryVersion: 'test',
@@ -100,6 +101,28 @@ void main() {
         await tester.tap(find.text('Run Echo'));
         await tester.pumpAndSettle();
         expect(find.text('Echo running'), findsOneWidget);
+        await tester.tap(find.text('Query'));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Echo running ·'), findsOneWidget);
+        expect(
+          tester
+              .widget<FilledButton>(
+                find.byKey(const ValueKey('run-query-preview')),
+              )
+              .onPressed,
+          isNull,
+        );
+        expect(gateway.calls, hasLength(1));
+        expect(gateway.calls.single.stopped, isFalse);
+        await tester.tap(find.text('View run'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Back'));
+        await tester.pumpAndSettle();
+        expect(
+          find.text('UI preview · synthetic data · no network'),
+          findsOneWidget,
+        );
+
         await tester.tap(find.widgetWithText(ListTile, 'Settings'));
         await tester.pumpAndSettle();
         expect(gateway.calls.single.stopped, isFalse);
@@ -131,6 +154,28 @@ void main() {
           expect(tester.takeException(), isNull);
         }
         expect(find.textContaining('Echo status: 0x0000'), findsOneWidget);
+        final writes = runs.summaries.length;
+        final eventWrites = runs.events.length;
+        final runId = runner.state.summary!.id;
+        await tester.tap(find.widgetWithText(ListTile, 'Nodes'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('open-node-node')));
+        await tester.pumpAndSettle();
+        // Query remains the last operation selected for this node.
+        expect(
+          find.text('UI preview · synthetic data · no network'),
+          findsOneWidget,
+        );
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('run-query-preview')),
+        );
+        await tester.tap(find.byKey(const ValueKey('run-query-preview')));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('3 retained rows'), findsOneWidget);
+        expect(gateway.calls, hasLength(1));
+        expect(runs.summaries.length, writes);
+        expect(runs.events.length, eventWrites);
+        expect(runner.state.summary!.id, runId);
       },
     );
   }

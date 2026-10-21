@@ -7,6 +7,9 @@ import '../bindings/echo.dart';
 import '../features/settings/settings_view.dart';
 import '../features/nodes/node_library.dart';
 import '../features/echo/echo_view.dart';
+import '../features/query/query_preview.dart';
+import '../features/query/query_view.dart';
+import '../ui/workbench_header.dart';
 
 enum _Destination {
   nodes('Nodes', Icons.dns_outlined),
@@ -43,12 +46,15 @@ class WorkbenchShell extends ConsumerStatefulWidget {
 class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
   _Location _location = _library;
   _Location _runOrigin = _library;
+  QueryPreviewController? _query;
+  WorkbenchOperation _operation = WorkbenchOperation.echo;
   bool _selecting = false;
   int _navigation = 0, _restoreLibraryFocus = 0;
   final _viewRunFocus = FocusNode(debugLabel: 'View run');
 
   @override
   void dispose() {
+    _query?.dispose();
     _viewRunFocus.dispose();
     super.dispose();
   }
@@ -106,6 +112,11 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
   Widget build(BuildContext context) {
     final config = ref.watch(configurationProvider);
     ref.listen(configurationProvider, (_, next) {
+      if (_query != null && next.selectedNodeId != _query!.nodeId) {
+        _query!.dispose();
+        _query = null;
+        _operation = WorkbenchOperation.echo;
+      }
       if (_location.inner == _NodePage.workspace &&
           next.node?.id != _location.nodeId) {
         _allNodes();
@@ -119,6 +130,7 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
     final displaysEvidence =
         _location.page == _Destination.nodes &&
         ((_location.inner == _NodePage.workspace &&
+                _operation == WorkbenchOperation.echo &&
                 echo.request?.node.id == _location.nodeId) ||
             (_location.inner == _NodePage.run &&
                 echo.summary?.id == _location.runId));
@@ -191,11 +203,7 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
                         Positioned.fill(
                           child: switch (_location.page) {
                             _Destination.nodes => switch (_location.inner) {
-                              _NodePage.workspace => EchoView(
-                                key: ValueKey(_location.nodeId),
-                                nodeId: _location.nodeId!,
-                                onBack: _allNodes,
-                              ),
+                              _NodePage.workspace => _workspace(config),
                               _NodePage.run => EchoRunView(
                                 key: ValueKey(_location.runId),
                                 runId: _location.runId!,
@@ -223,6 +231,29 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
         ],
       ),
     );
+  }
+
+  Widget _workspace(AppConfiguration config) {
+    final header = WorkbenchHeader(
+      config: config,
+      nodeId: _location.nodeId!,
+      onBack: _allNodes,
+      operation: _operation,
+      onOperationChanged: (value) => setState(() => _operation = value),
+    );
+    return switch (_operation) {
+      WorkbenchOperation.echo => EchoView(
+        key: ValueKey(_location.nodeId),
+        nodeId: _location.nodeId!,
+        onBack: _allNodes,
+        workspaceHeader: header,
+      ),
+      WorkbenchOperation.query => QueryPreviewView(
+        key: ValueKey(_location.nodeId),
+        controller: _query!,
+        header: header,
+      ),
+    };
   }
 
   Widget _placeholder(IconData icon, String title) => _WorkflowPlaceholder(
@@ -253,6 +284,11 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
           navigation != _navigation ||
           ref.read(configurationProvider).node?.id != node.id) {
         return false;
+      }
+      if (_query?.nodeId != node.id) {
+        _query?.dispose();
+        _query = QueryPreviewController(node.id);
+        _operation = WorkbenchOperation.echo;
       }
       _navigate((
         page: _Destination.nodes,

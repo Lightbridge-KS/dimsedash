@@ -12,7 +12,7 @@ read_when:
 >
 > See also: [System Architecture](01-system-architecture.md) · [Data Architecture](02-data-architecture.md) · [Codebase Blueprint](../structure/01-codebase-blueprint.md)
 
-**Status: approved surface design; S0 shell and Settings implemented, remaining workflows planned.** The advanced Identifier editor is confirmed for the first preview; the local dataset rule engine is deferred. Existing package, Riverpod, concurrency and storage decisions remain settled. The three surface choices are approved (2026-10-19): single study/series/instance selection without batching, structured nested editing, and masked-on-launch values with separate thumbnail reveal. No CLI, public HTTP API, background daemon or automation interface is introduced.
+**Status: approved surface design; S0 configuration and S1 Echo implemented; Query UI preview is synthetic and real Query/Retrieve remain planned.** The advanced Identifier editor is confirmed for the first preview; the local dataset rule engine is deferred. Existing package, Riverpod, concurrency and storage decisions remain settled. The three surface choices are approved (2026-10-19): single study/series/instance selection without batching, structured nested editing, and masked-on-launch values with separate thumbnail reveal. No CLI, public HTTP API, background daemon or automation interface is introduced.
 
 The [refined interactive mockup](assets/workbench-v2.html) demonstrates the primary workflow with synthetic data and simulated outcomes. It is a proposal refining the [approved original](../req/assets/approved-workbench.html), not a replacement approval or interoperability result. The original remains unchanged. Captured [query](assets/workbench-v2-query.png), [dark appearance](assets/workbench-v2-dark.png) and [inspection](assets/workbench-v2-inspection.png) views show the composer, masked headers and synthetic thumbnail. The added [single-instance review](assets/workbench-v2-instance.png) shows IMAGE scope with the complete study/series/SOP instance UID hierarchy. Mockup coverage and limitations are listed in §8.
 
@@ -120,6 +120,19 @@ First launch opens Nodes with an empty library and **Add node**, with a short ex
 4. **Inspect the result:** show exact operation status and which stages were observed. Empty results are a valid outcome, not an onboarding failure.
 
 Restart restores saved configuration, retained history and the independent file inventory. Query results, sensitive draft criteria and thumbnails do not return. Listener stays stopped. Interrupted runs and pending saves show recovery outcomes; the app never automatically reissues a request. A database/migration failure presents a recovery error with a useful local diagnosis, not an automatic reset button that discards records.
+
+## Query implementation checkpoint — 2026-10-22
+
+[Option A](06-query-workbench-options.md) is approved for the full-width Query
+composer. Flutter now exposes Echo / Query within the nested node workbench.
+Query is a labeled synthetic UI preview: common keys, fixed response scenarios,
+explicit hierarchy navigation, metadata inspection and read-only retrieval handoff.
+It owns no network operations or persistent history. A single shell-owned preview
+session survives navigation for the same node and is cleared on node change or
+selection loss. Real Echo remains independent and its active/latest strip is shown
+when Query is displayed. These preview mechanics do not complete the production
+Find, full Identifier or Retrieve contracts below. Verification is recorded in the
+[preview tracker](../progress/query-ui-preview.md).
 
 ## 4. Key journeys
 

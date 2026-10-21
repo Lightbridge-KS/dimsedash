@@ -4,13 +4,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../bindings/configuration.dart';
 import '../../bindings/echo.dart';
-import '../../ui/node_fields.dart';
+import '../../ui/workbench_header.dart';
 import 'echo_evidence.dart';
 
 class EchoView extends ConsumerStatefulWidget {
-  const EchoView({super.key, required this.nodeId, required this.onBack});
+  const EchoView({
+    super.key,
+    required this.nodeId,
+    required this.onBack,
+    this.workspaceHeader,
+  });
   final String nodeId;
   final VoidCallback onBack;
+  final Widget? workspaceHeader;
   @override
   ConsumerState<EchoView> createState() => _EchoViewState();
 }
@@ -31,42 +37,12 @@ class _EchoViewState extends ConsumerState<EchoView> {
       state: ownsEvidence ? state : null,
       emptyMessage: 'No retained Echo evidence for this node',
       header: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            onPressed: widget.onBack,
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('All nodes'),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text(
-              validTarget ? node.label : 'Node unavailable',
-              style: Theme.of(context).textTheme.headlineSmall,
+        widget.workspaceHeader ??
+            WorkbenchHeader(
+              config: config,
+              nodeId: widget.nodeId,
+              onBack: widget.onBack,
             ),
-            if (validTarget) NodeEnvironmentBadge(node.environment),
-          ],
-        ),
-        if (validTarget) Text('${node.calledAe} · ${node.host}:${node.port}'),
-        Text('Calling AE · ${config.client.callingAe}'),
-        ExpansionTile(
-          key: ValueKey('connection-details-${widget.nodeId}'),
-          tilePadding: EdgeInsets.zero,
-          title: const Text('Connection details'),
-          children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Timeouts · connect ${config.client.timeouts.connect}s · association ${config.client.timeouts.association}s · DIMSE ${config.client.timeouts.dimse}s · idle ${config.client.timeouts.idle}s',
-              ),
-            ),
-          ],
-        ),
         if (ownsEvidence && _settingsDiffer(config, state))
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),

@@ -75,6 +75,19 @@ void main() {
         await tester.tap(find.text('Run Echo'));
         await tester.pumpAndSettle();
         expect(runtime.runner!.active, isTrue);
+        await tester.tap(find.text('Query'));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Echo running ·'), findsOneWidget);
+        expect(
+          tester
+              .widget<FilledButton>(
+                find.byKey(const ValueKey('run-query-preview')),
+              )
+              .onPressed,
+          isNull,
+        );
+        expect(runtime.runner!.state.stopRequested, isFalse);
+
         await tester.tap(find.text('All nodes'));
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(ValueKey('open-node-${added.node!.id}')));

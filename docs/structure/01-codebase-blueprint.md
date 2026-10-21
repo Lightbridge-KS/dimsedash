@@ -457,3 +457,18 @@ This blueprint introduces no ADR: it reconciles the current pre-release design i
 The generated app/library provenance file is derived from manifests and resolved
 Git source. Final dependency pins and native acceptance are tracked separately
 from local implementation in [S1](../progress/s1-echo.md).
+
+### Query UI preview checkpoint — 2026-10-22
+
+`features/query` contains immutable preview draft/entry, request snapshot, result
+context and scenario types, plus a shell-owned `QueryPreviewController`. This is a
+presentation-only implementation with fixed fixtures; it neither introduces the
+planned core query contracts nor calls the operation runner, gateway or stores.
+The controller retains only the current hierarchy and its parent contexts.
+
+Composition shares the node header and operation switch through `ui`, preserving
+feature independence. Preview state survives same-node navigation, resets on node
+change/selection loss and never enters SQLite. The runtime continues to own real
+Echo. Production Query state ownership, bounded response streaming and validated
+Identifier policy remain the planned core/runtime work above. See the
+[preview tracker](../progress/query-ui-preview.md) for implementation evidence.

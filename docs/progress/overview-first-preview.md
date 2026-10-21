@@ -125,6 +125,10 @@ Detailed source/evidence state: [S1 tracker](s1-echo.md). Implementation and aut
 
 ### S2 — Query with friendly and exact identifiers
 
+**UI-only checkpoint (2026-10-22):** Option A is implemented, locally verified and approved for delivery to `main`. [Query preview tracker](query-ui-preview.md) records dry/native gates and visual evidence. Real S2 networking and complete Identifier editing remain unstarted.
+
+**Design review (2026-10-22):** [Query workbench options](../design/06-query-workbench-options.md) reconcile the original HTML with the implemented nested Nodes workbench and global-only Settings. The full-width composer (A) is approved; the side composer remains a comparison alternative. The [interactive prototype](../design/assets/query-options.html) uses fixed synthetic responses and no networking. The approved UI-only implementation is tracked separately above; production S2 remains pending and the S2 checkboxes below are unchanged. Browser checks passed for common advanced/filter value sharing, masked/revealed identifiers, explicit SERIES/IMAGE entry and required parent UIDs, parent-row restoration, empty/failure/partial fixture states, both layouts and light/dark appearance. At a measured 760 × 600 CSS viewport both options stack without workspace horizontal overflow; wide layout was inspected at 1440 × 1200. Prototype JavaScript syntax and `git diff --check` passed; no console errors were observed during those checks. These checks do not establish Flutter, native accessibility or real DIMSE behavior.
+
 **Demo:** query a synthetic date/modality/patient/accession subset; navigate studies → series → instances, refine a series-level body-part query, inspect returned headers, and review one instance's complete UID hierarchy.
 
 - [ ] Build the immutable Identifier model and shared friendly/advanced editor, numeric tag/VR/value validation, matching/return-key distinction, private context, nested same-item sequence groups and resolved tree. Add capability/unknown warnings without inventing peer support.

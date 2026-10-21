@@ -101,6 +101,19 @@ void main() {
     );
     expect(checkArchitecture(root), isNotEmpty);
   });
+  test('query stays feature-local and cannot import Echo or storage', () {
+    put('lib/features/query/model.dart', 'class Preview {}');
+    put('lib/features/query/view.dart', 'import "model.dart";');
+    expect(checkArchitecture(root), isEmpty);
+    put('lib/features/echo/view.dart', 'class Echo {}');
+    put('lib/features/query/view.dart', 'import "../echo/view.dart";');
+    expect(checkArchitecture(root), isNotEmpty);
+    put(
+      'lib/features/query/view.dart',
+      'import "../../adapters/persistence/db.dart";',
+    );
+    expect(checkArchitecture(root), isNotEmpty);
+  });
   test('empty app cannot give a green gate', () {
     Directory('${root.path}/lib').deleteSync(recursive: true);
     expect(checkArchitecture(root).join(), contains('not scaffolded'));

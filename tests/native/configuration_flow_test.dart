@@ -151,6 +151,23 @@ void main() {
       await tester.tap(find.text('Reveal values'));
       await tester.pumpAndSettle();
       expect(find.text('Mask values'), findsOneWidget);
+      await tester.tap(find.text('Query'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('run-query-preview')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('run-query-preview')));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('3 retained rows'), findsOneWidget);
+      expect(
+        (await runtime!.configStore.load() as Success<AppConfiguration>)
+            .value
+            .node!
+            .label,
+        'Synthetic PACS',
+      );
+
       await tester.pumpWidget(const SizedBox());
       await runtime!.close();
       await launch();
@@ -172,6 +189,11 @@ void main() {
       await tester.tap(find.byKey(ValueKey('open-node-$nodeId')));
       await tester.pumpAndSettle();
       expect(find.text('All nodes'), findsOneWidget);
+      await tester.tap(find.text('Query'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('No query results yet'), findsOneWidget);
+      expect(find.textContaining('retained rows'), findsNothing);
+
       await tester.tap(find.widgetWithText(ListTile, 'Nodes'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(ValueKey('node-menu-$nodeId')));
