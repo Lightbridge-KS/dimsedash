@@ -72,6 +72,21 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(ValueKey('open-node-${saved.node!.id}')));
         await tester.pumpAndSettle();
+        Future<void> tapVisible(Finder target) async {
+          await tester.ensureVisible(target);
+          await tester.pumpAndSettle();
+          await tester.tap(target);
+          await tester.pumpAndSettle();
+        }
+
+        // Materialize Query fixtures before the real operation occupies admission.
+        await tapVisible(find.text('Query'));
+        await tapVisible(find.byKey(const ValueKey('run-query-preview')));
+        await tapVisible(find.text('Select').first);
+        await tapVisible(find.text('Review retrieve'));
+        await tapVisible(find.text('Choose sample folder'));
+        await tapVisible(find.text('Back to results'));
+        await tapVisible(find.text('Echo'));
         await tester.tap(find.text('Run Echo'));
         await tester.pumpAndSettle();
         expect(runtime.runner!.active, isTrue);
@@ -87,9 +102,32 @@ void main() {
           isNull,
         );
         expect(runtime.runner!.state.stopRequested, isFalse);
+        await tapVisible(find.text('Review retrieve'));
+        expect(
+          tester
+              .widget<FilledButton>(
+                find.byKey(const ValueKey('show-retrieve-sample')),
+              )
+              .onPressed,
+          isNull,
+        );
+        final before =
+            (await runtime.configStore.load() as Success<AppConfiguration>)
+                .value
+                .revision;
+        await tapVisible(find.text('View run'));
+        await tapVisible(find.text('Back'));
+        expect(find.text('Back to results'), findsOneWidget);
+        expect(
+          (await runtime.configStore.load() as Success<AppConfiguration>)
+              .value
+              .revision,
+          before,
+        );
+        expect(runtime.runner!.state.stopRequested, isFalse);
+        await tapVisible(find.text('Back to results'));
 
-        await tester.tap(find.text('All nodes'));
-        await tester.pumpAndSettle();
+        await tapVisible(find.text('All nodes'));
         await tester.tap(find.byKey(ValueKey('open-node-${added.node!.id}')));
         for (
           var i = 0;

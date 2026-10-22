@@ -114,6 +114,22 @@ void main() {
     );
     expect(checkArchitecture(root), isNotEmpty);
   });
+  test('Retrieve is feature-local with no I/O or Query coupling', () {
+    put('lib/features/retrieve/model.dart', 'class Preview {}');
+    put('lib/features/retrieve/view.dart', 'import "model.dart";');
+    expect(checkArchitecture(root), isEmpty);
+    for (final directive in [
+      'import "../query/view.dart";',
+      'import "../../adapters/persistence/db.dart";',
+      'import "dart:io";',
+    ]) {
+      put('lib/features/retrieve/view.dart', directive);
+      expect(checkArchitecture(root), isNotEmpty);
+    }
+    put('lib/features/retrieve/view.dart', 'class View {}');
+    put('lib/features/query/view.dart', 'import "../retrieve/model.dart";');
+    expect(checkArchitecture(root), isNotEmpty);
+  });
   test('empty app cannot give a green gate', () {
     Directory('${root.path}/lib').deleteSync(recursive: true);
     expect(checkArchitecture(root).join(), contains('not scaffolded'));

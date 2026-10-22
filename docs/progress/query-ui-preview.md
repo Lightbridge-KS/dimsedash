@@ -25,7 +25,7 @@ Implemented and locally verified 2026-10-22: Option A in the normal app with a s
 
 No networking, durable query/history writes, schema/dependency changes or core public API additions. The shell retains one preview session for the selected node across navigation, clearing it on node change/removal/selection loss. Echo remains runtime-owned. Query preview cannot stop, retarget or replace it. Real Echo admission disables preview Run until cleanup finishes.
 
-Friendly and common advanced controls share one draft. Return/disabled/matching intent is explicit. Body part is pending at STUDY and included only in SERIES. Opening a child sends nothing and loads no fixtures. An explicit preview run freezes its Identifier and effective connection settings. Retrieval review is read-only and cannot transfer files.
+Friendly and common advanced controls share one draft. Return/disabled/matching intent is explicit. Body part is pending at STUDY and included only in SERIES. Opening a child sends nothing and loads no fixtures. An explicit preview run freezes its Identifier and effective connection settings. The original read-only retrieval handoff is superseded by the [synthetic Retrieve workspace](retrieve-ui-preview.md); it still cannot transfer files. Prior verification receipts below describe the original Query implementation.
 
 ## Verification evidence
 

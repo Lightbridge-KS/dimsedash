@@ -5,14 +5,25 @@ import '../../bindings/configuration.dart';
 import '../../bindings/echo.dart';
 import 'query_preview.dart';
 
+typedef QueryRetrieveSelection = ({
+  PreviewMatch row,
+  PreviewResultContext result,
+});
+
 class QueryPreviewView extends ConsumerStatefulWidget {
   const QueryPreviewView({
     super.key,
     required this.controller,
     required this.header,
+    required this.onRetrieve,
+    this.retrieveFocus,
+    this.restoreRetrieveFocus = false,
   });
   final QueryPreviewController controller;
   final Widget header;
+  final ValueChanged<QueryRetrieveSelection> onRetrieve;
+  final FocusNode? retrieveFocus;
+  final bool restoreRetrieveFocus;
   @override
   ConsumerState<QueryPreviewView> createState() => _QueryPreviewViewState();
 }
@@ -26,6 +37,11 @@ class _QueryPreviewViewState extends ConsumerState<QueryPreviewView> {
     super.initState();
     _scroll = ScrollController(initialScrollOffset: c.scrollOffset);
     _scroll.addListener(() => c.scrollOffset = _scroll.offset);
+    if (widget.restoreRetrieveFocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.retrieveFocus?.requestFocus();
+      });
+    }
   }
 
   @override
@@ -624,28 +640,10 @@ class _QueryPreviewViewState extends ConsumerState<QueryPreviewView> {
       Align(
         alignment: Alignment.centerRight,
         child: OutlinedButton(
-          onPressed: c.selected == null
+          focusNode: widget.retrieveFocus,
+          onPressed: c.selected == null || c.result == null
               ? null
-              : () => _dialog(
-                  'Retrieve handoff · preview',
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        c.draft.level == QueryLevel.image
-                            ? 'This instance only'
-                            : 'All instances in this ${c.draft.level.name}',
-                      ),
-                      _identifier(
-                        c.selected!.targetIdentifier(c.draft.level),
-                        reveal,
-                      ),
-                      const Text(
-                        'Retrieval unavailable. C-GET / C-MOVE and destination readiness belong to a later implementation. No files are transferred.',
-                      ),
-                    ],
-                  ),
-                ),
+              : () => widget.onRetrieve((row: c.selected!, result: c.result!)),
           child: const Text('Review retrieve'),
         ),
       ),

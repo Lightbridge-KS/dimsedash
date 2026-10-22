@@ -10,6 +10,8 @@ import '../features/echo/echo_view.dart';
 import '../features/query/query_preview.dart';
 import '../features/query/query_view.dart';
 import '../ui/workbench_header.dart';
+import '../features/retrieve/retrieve_preview.dart';
+import '../features/retrieve/retrieve_view.dart';
 
 enum _Destination {
   nodes('Nodes', Icons.dns_outlined),
@@ -22,7 +24,7 @@ enum _Destination {
   final IconData icon;
 }
 
-enum _NodePage { library, workspace, run }
+enum _NodePage { library, workspace, run, retrieveReview, retrieveRun }
 
 typedef _Location = ({
   _Destination page,
@@ -47,6 +49,9 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
   _Location _location = _library;
   _Location _runOrigin = _library;
   QueryPreviewController? _query;
+  RetrievePreviewController? _retrieve;
+  bool _restoreRetrieveFocus = false;
+  final _retrieveFocus = FocusNode(debugLabel: 'Review retrieve');
   WorkbenchOperation _operation = WorkbenchOperation.echo;
   bool _selecting = false;
   int _navigation = 0, _restoreLibraryFocus = 0;
@@ -55,6 +60,8 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
   @override
   void dispose() {
     _query?.dispose();
+    _retrieve?.dispose();
+    _retrieveFocus.dispose();
     _viewRunFocus.dispose();
     super.dispose();
   }
@@ -96,8 +103,12 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
   void _backFromRun() {
     final config = ref.read(configurationProvider);
     var origin = _runOrigin;
-    if (origin.inner == _NodePage.workspace &&
-        config.node?.id != origin.nodeId) {
+    if (origin.nodeId != null && config.node?.id != origin.nodeId) {
+      origin = _library;
+    }
+    if ((origin.inner == _NodePage.retrieveReview ||
+            origin.inner == _NodePage.retrieveRun) &&
+        _retrieve?.nodeId != origin.nodeId) {
       origin = _library;
     }
     _navigate(origin, restoreLibrary: origin != _runOrigin);
@@ -115,10 +126,12 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
       if (_query != null && next.selectedNodeId != _query!.nodeId) {
         _query!.dispose();
         _query = null;
+        _retrieve?.dispose();
+        _retrieve = null;
         _operation = WorkbenchOperation.echo;
       }
-      if (_location.inner == _NodePage.workspace &&
-          next.node?.id != _location.nodeId) {
+      _retrieve?.syncConfiguration(next);
+      if (_location.nodeId != null && next.node?.id != _location.nodeId) {
         _allNodes();
       }
     });
@@ -181,6 +194,27 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
                       ),
                     ),
                   ),
+                if (_retrieve?.latest != null &&
+                    _location.page == _Destination.nodes &&
+                    _location.inner != _NodePage.retrieveRun &&
+                    _location.inner != _NodePage.run)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text('Latest retrieve preview · synthetic'),
+                        ),
+                        TextButton(
+                          onPressed: () => _showRetrieve(
+                            _NodePage.retrieveRun,
+                            _retrieve!.latest!.id,
+                          ),
+                          child: const Text('View sample'),
+                        ),
+                      ],
+                    ),
+                  ),
                 Expanded(
                   child: Stack(
                     fit: StackFit.expand,
@@ -208,6 +242,27 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
                                 key: ValueKey(_location.runId),
                                 runId: _location.runId!,
                                 onBack: _backFromRun,
+                              ),
+                              _NodePage.retrieveReview ||
+                              _NodePage.retrieveRun => RetrievePreviewView(
+                                key: ValueKey(
+                                  '${_location.inner}-${_location.runId}',
+                                ),
+                                controller: _retrieve!,
+                                sampleId:
+                                    _location.inner == _NodePage.retrieveRun
+                                    ? _location.runId
+                                    : null,
+                                header: WorkbenchHeader(
+                                  config: config,
+                                  nodeId: _location.nodeId!,
+                                  onBack: _backToResults,
+                                  backLabel: 'Back to results',
+                                ),
+                                onSample: (id) =>
+                                    _showRetrieve(_NodePage.retrieveRun, id),
+                                onReview: () =>
+                                    _showRetrieve(_NodePage.retrieveReview),
                               ),
                               _NodePage.library => const SizedBox.shrink(),
                             },
@@ -252,8 +307,66 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
         key: ValueKey(_location.nodeId),
         controller: _query!,
         header: header,
+        onRetrieve: _reviewRetrieve,
+        retrieveFocus: _retrieveFocus,
+        restoreRetrieveFocus: _restoreRetrieveFocus,
       ),
     };
+  }
+
+  void _reviewRetrieve(QueryRetrieveSelection selection) {
+    final request = selection.result.request;
+    final level = request.draft.level;
+    final row = selection.row;
+    if (ref.read(configurationProvider).node?.id != request.node.id ||
+        !row.canTarget(level)) {
+      return;
+    }
+    _retrieve ??= RetrievePreviewController(request.node.id);
+    final seed = RetrieveSeed(
+      sourceId:
+          '${selection.result.sequence}-${level.name}-${row.studyUid}-${row.seriesUid}-${row.sopUid}',
+      node: request.node,
+      client: request.client,
+      scope: RetrieveScope.values.byName(level.name),
+      description: row.description,
+      uids: {
+        'StudyInstanceUID': row.studyUid!,
+        if (level != QueryLevel.study) 'SeriesInstanceUID': row.seriesUid!,
+        if (level == QueryLevel.image) 'SOPInstanceUID': row.sopUid!,
+      },
+    );
+    if (_retrieve!.open(seed)) _showRetrieve(_NodePage.retrieveReview);
+  }
+
+  void _showRetrieve(_NodePage page, [String? id]) {
+    final nodeId = _retrieve?.nodeId;
+    if (nodeId == null || ref.read(configurationProvider).node?.id != nodeId) {
+      return;
+    }
+    _restoreRetrieveFocus = false;
+    _navigate((
+      page: _Destination.nodes,
+      inner: page,
+      nodeId: nodeId,
+      runId: id,
+    ));
+  }
+
+  void _backToResults() {
+    final nodeId = _query?.nodeId;
+    if (nodeId == null || ref.read(configurationProvider).node?.id != nodeId) {
+      _allNodes();
+      return;
+    }
+    _restoreRetrieveFocus = true;
+    _operation = WorkbenchOperation.query;
+    _navigate((
+      page: _Destination.nodes,
+      inner: _NodePage.workspace,
+      nodeId: nodeId,
+      runId: null,
+    ));
   }
 
   Widget _placeholder(IconData icon, String title) => _WorkflowPlaceholder(
@@ -288,6 +401,9 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
       if (_query?.nodeId != node.id) {
         _query?.dispose();
         _query = QueryPreviewController(node.id);
+        _retrieve?.dispose();
+        _retrieve = null;
+        _restoreRetrieveFocus = false;
         _operation = WorkbenchOperation.echo;
       }
       _navigate((

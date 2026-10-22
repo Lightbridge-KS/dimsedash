@@ -189,6 +189,26 @@ Resolved Identifier displays numeric tags, dictionary names, VRs, values and SQ 
 
 ### 4.3 Retrieve review → receive → inspect
 
+**Implemented presentation checkpoint — synthetic only:** approved Option A
+opens a full-width nested Retrieve workspace from Query's selected row. Back to
+results restores Query state and focus; no Retrieve sidebar item or permanent
+operation tab is added. Fresh drafts choose C-GET, require explicit sample-folder
+selection, and offer C-MOVE with preview-only receiver readiness. The actual
+receiver stays unavailable. Advanced Identifier edits only scope-required UIDs;
+resolved settings and frozen execution evidence remain distinct.
+
+Fixed scenarios and explicit snapshot transitions are labeled synthetic. Peer
+counts, local save receipts and unlinked receiver activity remain separate.
+Header inspection and thumbnail placeholders live inside Retrieve, with session
+masking and separate thumbnail reveal. No files are read or written, and global
+Received files stays deferred. Same-node navigation retains one draft and latest
+sample; another node, deletion, selection loss or restart clears the session.
+Real Echo disables sample execution/transitions without preventing browsing.
+See [Retrieve options](07-retrieve-workbench-options.md) and the
+[preview tracker](../progress/retrieve-ui-preview.md). The production contract
+below is not completed by this presentation checkpoint.
+
+
 Review presents a concise target: **Series 2 within study … — all instances in this series**, with complete unique identifiers available. Counts from query metadata are estimates with a source, not proof of what will be sent. Manual UID editing marks the target **Edited identifier** and invalidates the old selection description until revalidated. It must never keep saying “Series 2” while sending different UIDs.
 
 | Review field | C-MOVE | C-GET |

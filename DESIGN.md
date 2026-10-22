@@ -114,3 +114,17 @@ network**. Fixed fixtures are distinct from live Echo evidence. Preview controls
 live in a disclosure; arbitrary tag/sequence editing is an illustrative sketch.
 Remote queries and retrieval remain pending. See
 [the Query preview tracker](docs/progress/query-ui-preview.md).
+
+## Retrieve preview
+
+Approved Option A uses a full-width nested review/evidence workspace reached
+from one selected Query target. Back to results preserves the source workspace.
+Method and destination panels stack cleanly at narrow widths. C-GET is the
+initial choice; C-MOVE adds explicitly simulated receiver readiness.
+
+Use **UI preview · synthetic data · no network or files** throughout. Sample
+folder selection, fixed outcome fixtures and thumbnail placeholders never imply
+real storage or connectivity. Keep peer counters separate from local receipt
+results, and keep unlinked receiver activity outside both. Inspection stays
+inside Retrieve; the actual sidebar receiver remains informational and unchanged.
+See [Retrieve preview tracker](docs/progress/retrieve-ui-preview.md).

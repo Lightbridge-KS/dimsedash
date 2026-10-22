@@ -144,8 +144,9 @@ void main() {
       await tap(tester, find.text('Select').first);
       await tap(tester, find.text('Review retrieve'));
       expect(find.text('This instance only'), findsOneWidget);
+      await tap(tester, find.text('Resolved request'));
       expect(find.textContaining('SOPInstanceUID ='), findsWidgets);
-      await tap(tester, find.text('Close'));
+      await tap(tester, find.text('Back to results'));
       await tap(tester, find.text('Studies'));
       expect(c.result!.rows, hasLength(3));
       expect(c.selected, isNull);

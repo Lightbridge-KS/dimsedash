@@ -172,6 +172,26 @@ void main() {
         await tester.tap(find.byKey(const ValueKey('run-query-preview')));
         await tester.pumpAndSettle();
         expect(find.textContaining('3 retained rows'), findsOneWidget);
+        Future<void> tapVisible(Finder finder) async {
+          await tester.ensureVisible(finder);
+          await tester.pumpAndSettle();
+          await tester.tap(finder);
+          await tester.pumpAndSettle();
+        }
+
+        await tapVisible(find.text('Select').first);
+        await tapVisible(find.text('Review retrieve'));
+        await tapVisible(find.text('Choose sample folder'));
+        await tapVisible(find.byKey(const ValueKey('show-retrieve-sample')));
+        expect(
+          find.textContaining('Synthetic final status 0x0000'),
+          findsOneWidget,
+        );
+        await tapVisible(find.text('View run'));
+        expect(find.textContaining('Echo status: 0x0000'), findsOneWidget);
+        await tapVisible(find.text('Back'));
+        expect(find.text('Back to results'), findsOneWidget);
+
         expect(gateway.calls, hasLength(1));
         expect(runs.summaries.length, writes);
         expect(runs.events.length, eventWrites);

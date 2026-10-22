@@ -472,3 +472,21 @@ change/selection loss and never enters SQLite. The runtime continues to own real
 Echo. Production Query state ownership, bounded response streaming and validated
 Identifier policy remain the planned core/runtime work above. See the
 [preview tracker](../progress/query-ui-preview.md) for implementation evidence.
+
+## Retrieve presentation checkpoint
+
+The synthetic Retrieve preview lives in `lib/features/retrieve`: immutable
+handoff/draft/snapshot types, a bounded in-memory controller, and review/evidence
+widgets. The app shell maps Query selection into a Retrieve seed and owns its
+lifecycle and nested routes; Query and Retrieve do not import each other. Shared
+workbench header presentation stays in `lib/ui`.
+
+This checkpoint adds no public core contract, adapter, dependency or schema.
+Sample execution and scenario transitions are synchronous presentation changes;
+no gateway, run store, file dialog, socket or filesystem access is available to
+the controller. Real Echo state is observed only for admission and navigation.
+The shell retains one latest sample and validates its route ID; stale routes do
+not silently display replacements. Source Query settings and sample-execution
+settings are separately frozen. Production receiver, storage, retrieve execution
+and restart recovery modules remain future slices. Verification lives in the
+[Retrieve preview tracker](../progress/retrieve-ui-preview.md).

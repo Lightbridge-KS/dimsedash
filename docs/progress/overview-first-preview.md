@@ -30,7 +30,7 @@ Global saves preserve node rows/revisions/selection. Local dry gates (76 Flutter
 commit hooks passed; hosted CI for this refinement is not yet verified. Manual
 desktop acceptance stays pending.
 
-**Current evidence:** [S1 — node management and Echo](s1-echo.md) records implementation `40b1563`, committed-clone checks, hosted CI and remaining manual acceptance. All DICOM refs target `v0.1.0-dev.2` at `53ee5ec9c204e58382bf9235a621eb05af8d4179`. No later slice has started.
+**Current evidence:** [S1 — node management and Echo](s1-echo.md) records implementation `40b1563`, committed-clone checks, hosted CI and remaining manual acceptance. All DICOM refs target `v0.1.0-dev.2` at `53ee5ec9c204e58382bf9235a621eb05af8d4179`. Later production slices remain pending; Query and Retrieve presentation-only checkpoints are tracked separately below.
 
 **Preview finish line:** configure → Find → select one study/series/instance → review exact Identifier → C-GET or C-MOVE → receive/save → inspect headers and a supported thumbnail → inspect/export truthful evidence. The complete workflow must run in packaged macOS and Linux apps with failure, retention and restart behavior verified.
 
@@ -154,6 +154,10 @@ Detailed source/evidence state: [S1 tracker](s1-echo.md). Implementation and aut
 
 ### S4 — Find → C-GET → saved objects
 
+**UI-only checkpoint (2026-10-22):** Option A is implemented, locally verified and approved for delivery to `main`. [Retrieve preview tracker](retrieve-ui-preview.md) records approved Option A, initial C-GET, synthetic-only boundaries and passing local dry/native gates (100 Flutter / 22 core tests). Dark/light native screenshots are recorded there. Production checkboxes and manual desktop acceptance remain pending.
+
+**Design proposal (2026-10-22):** [Retrieve options](../design/07-retrieve-workbench-options.md) continue from the Query preview landed at `9d1fb4b`. A full-width nested review/run workspace (A, recommended) and side sheet (B) share the same target, method, destination and evidence contracts. Option A and initial C-GET are approved; implementation is tracked separately above. The [interactive HTML](../design/assets/retrieve-options.html) uses synthetic snapshots only; those original browser checks preceded the Flutter preview and did not change listener, file-save or protocol implementation. Browser checks covered method/folder gating, edited IMAGE identifiers, frozen sample evidence, cancellation intent, active-sample navigation, partial saves, and missing-callback presentation. Both layouts fit a measured 760 × 600 CSS viewport without workspace horizontal overflow; B hides the source pane at that size. Light/dark views were inspected and comparison screenshots saved. JavaScript syntax and diff whitespace checks passed. These checks do not complete S3–S5 or manual desktop acceptance.
+
 **Demo:** query, select one study/series/instance, review the exact target and receive folder, retrieve through C-GET with the standalone listener stopped, and see linked delivery/save counts.
 
 - [ ] Implement RetrieveTarget/review, UID-based advanced edits and stale-revision rejection; exclude arbitrary Find predicates. Share the same validated model with the adapter.
@@ -165,6 +169,8 @@ Detailed source/evidence state: [S1 tracker](s1-echo.md). Implementation and aut
 **Exit:** C-GET works without a separate listener; a selected instance retrieves exactly its identity in the controlled fixture. Protocol completion and local save completeness remain distinct.
 
 ### S5 — Find → C-MOVE → callback receipt
+
+**UI-only checkpoint:** C-MOVE preview readiness and sample outcomes are included in the [Retrieve preview tracker](retrieve-ui-preview.md); no receiver or protocol completion is implied.
 
 **Demo:** register the app's client AE/address/port in the synthetic PACS, start its receiver explicitly, retrieve the same fixture via C-MOVE, and inspect separate operation and inbound receipt evidence.
 

@@ -11,9 +11,11 @@ class WorkbenchHeader extends StatelessWidget {
     required this.config,
     required this.nodeId,
     required this.onBack,
+    this.backLabel = 'All nodes',
     this.operation,
     this.onOperationChanged,
   });
+  final String backLabel;
   final AppConfiguration config;
   final String nodeId;
   final VoidCallback onBack;
@@ -30,7 +32,7 @@ class WorkbenchHeader extends StatelessWidget {
           child: TextButton.icon(
             onPressed: onBack,
             icon: const Icon(Icons.arrow_back),
-            label: const Text('All nodes'),
+            label: Text(backLabel),
           ),
         ),
         const SizedBox(height: 12),
