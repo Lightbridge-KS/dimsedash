@@ -7,11 +7,9 @@ import '../bindings/echo.dart';
 import '../features/settings/settings_view.dart';
 import '../features/nodes/node_library.dart';
 import '../features/echo/echo_view.dart';
-import '../features/query/query_preview.dart';
-import '../features/query/query_view.dart';
+import '../features/query/query.dart';
 import '../ui/workbench_header.dart';
-import '../features/retrieve/retrieve_preview.dart';
-import '../features/retrieve/retrieve_view.dart';
+import '../features/retrieve/retrieve.dart';
 
 enum _Destination {
   nodes('Nodes', Icons.dns_outlined),

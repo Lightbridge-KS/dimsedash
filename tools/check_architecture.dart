@@ -24,6 +24,27 @@ List<String> checkArchitecture(Directory root) {
     sources.addAll(files.map((f) => p.relative(f.path, from: base)));
   }
   const coreDependencies = {'dartdicom'};
+  const featureEntries = {
+    'feature:query': {
+      'lib/features/query/query.dart',
+      'lib/features/query/query_preview.dart',
+      'lib/features/query/query_view.dart',
+    },
+    'feature:retrieve': {
+      'lib/features/retrieve/retrieve.dart',
+      'lib/features/retrieve/retrieve_preview.dart',
+      'lib/features/retrieve/retrieve_view.dart',
+    },
+  };
+  const featureNames = {
+    'feature:query': 'Query',
+    'feature:retrieve': 'Retrieve',
+  };
+  const previewModels = {
+    'lib/features/query/preview/query_preview_model.dart': 'Query',
+    'lib/features/retrieve/preview/retrieve_preview_model.dart': 'Retrieve',
+  };
+  final previewEdges = <String, Set<String>>{};
   final declared = <String, Set<String>>{};
   for (final manifest in [
     'pubspec.yaml',
@@ -99,6 +120,22 @@ List<String> checkArchitecture(Directory root) {
         return;
       }
       final uri = Uri.parse(raw);
+      final modelName = previewModels[source];
+      if (modelName != null &&
+          !(raw == 'package:dimsedash_core/dimsedash_core.dart' ||
+              uri.scheme == 'dart' &&
+                  {
+                    'async',
+                    'collection',
+                    'convert',
+                    'core',
+                    'math',
+                    'typed_data',
+                  }.contains(uri.path))) {
+        errors.add(
+          '$source -> $raw: $modelName models must not depend on presentation',
+        );
+      }
       String? target;
       if (uri.scheme == 'package') {
         final segments = uri.pathSegments;
@@ -159,6 +196,17 @@ List<String> checkArchitecture(Directory root) {
       }
       final targetOwner = module(target);
       final inTree = sources.contains(target);
+      final entries = featureEntries[targetOwner];
+      if (entries != null &&
+          owner != targetOwner &&
+          !entries.contains(target)) {
+        errors.add(
+          '$source -> $raw: use a ${featureNames[targetOwner]} public entrypoint',
+        );
+      }
+      if (featureEntries.containsKey(owner) && targetOwner == owner && inTree) {
+        previewEdges.putIfAbsent(source, () => <String>{}).add(target);
+      }
       if (!inTree ||
           !allowedLocal(owner, targetOwner) ||
           part &&
@@ -182,6 +230,26 @@ List<String> checkArchitecture(Directory root) {
         check(directive.uri?.stringValue, part: true);
       }
     }
+  }
+  final visited = <String>{};
+  final visiting = <String>{};
+  void visitPreview(String source) {
+    if (visiting.contains(source)) {
+      errors.add(
+        '$source: ${featureNames[module(source)]} import/export cycle',
+      );
+      return;
+    }
+    if (!visited.add(source)) return;
+    visiting.add(source);
+    for (final target in previewEdges[source] ?? <String>{}) {
+      visitPreview(target);
+    }
+    visiting.remove(source);
+  }
+
+  for (final source in previewEdges.keys) {
+    visitPreview(source);
   }
   return errors;
 }

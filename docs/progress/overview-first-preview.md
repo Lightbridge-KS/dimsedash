@@ -127,6 +127,10 @@ Detailed source/evidence state: [S1 tracker](s1-echo.md). Implementation and aut
 
 **UI-only checkpoint (2026-10-22):** Option A is implemented, locally verified and approved for delivery to `main`. [Query preview tracker](query-ui-preview.md) records dry/native gates and visual evidence. Real S2 networking and complete Identifier editing remain unstarted.
 
+Query modularization and a separately verified friendly-date input correction
+are tracked in [Query refactoring](refactor/refactor-query.md). These changes do
+not implement production S2 or alter the remaining desktop acceptance scope.
+
 **Design review (2026-10-22):** [Query workbench options](../design/06-query-workbench-options.md) reconcile the original HTML with the implemented nested Nodes workbench and global-only Settings. The full-width composer (A) is approved; the side composer remains a comparison alternative. The [interactive prototype](../design/assets/query-options.html) uses fixed synthetic responses and no networking. The approved UI-only implementation is tracked separately above; production S2 remains pending and the S2 checkboxes below are unchanged. Browser checks passed for common advanced/filter value sharing, masked/revealed identifiers, explicit SERIES/IMAGE entry and required parent UIDs, parent-row restoration, empty/failure/partial fixture states, both layouts and light/dark appearance. At a measured 760 × 600 CSS viewport both options stack without workspace horizontal overflow; wide layout was inspected at 1440 × 1200. Prototype JavaScript syntax and `git diff --check` passed; no console errors were observed during those checks. These checks do not establish Flutter, native accessibility or real DIMSE behavior.
 
 **Demo:** query a synthetic date/modality/patient/accession subset; navigate studies → series → instances, refine a series-level body-part query, inspect returned headers, and review one instance's complete UID hierarchy.
@@ -155,6 +159,11 @@ Detailed source/evidence state: [S1 tracker](s1-echo.md). Implementation and aut
 ### S4 — Find → C-GET → saved objects
 
 **UI-only checkpoint (2026-10-22):** Option A is implemented, locally verified and approved for delivery to `main`. [Retrieve preview tracker](retrieve-ui-preview.md) records approved Option A, initial C-GET, synthetic-only boundaries and passing local dry/native gates (100 Flutter / 22 core tests). Dark/light native screenshots are recorded there. Production checkboxes and manual desktop acceptance remain pending.
+
+The subsequent [Retrieve refactoring](refactor/refactor-retrieve.md) preserves the
+preview's behavior, public imports and shell ownership while separating models,
+session control, review/evidence panels and receipt inspection. Its verification
+is recorded separately from production retrieval and manual desktop acceptance.
 
 **Design proposal (2026-10-22):** [Retrieve options](../design/07-retrieve-workbench-options.md) continue from the Query preview landed at `9d1fb4b`. A full-width nested review/run workspace (A, recommended) and side sheet (B) share the same target, method, destination and evidence contracts. Option A and initial C-GET are approved; implementation is tracked separately above. The [interactive HTML](../design/assets/retrieve-options.html) uses synthetic snapshots only; those original browser checks preceded the Flutter preview and did not change listener, file-save or protocol implementation. Browser checks covered method/folder gating, edited IMAGE identifiers, frozen sample evidence, cancellation intent, active-sample navigation, partial saves, and missing-callback presentation. Both layouts fit a measured 760 × 600 CSS viewport without workspace horizontal overflow; B hides the source pane at that size. Light/dark views were inspected and comparison screenshots saved. JavaScript syntax and diff whitespace checks passed. These checks do not complete S3–S5 or manual desktop acceptance.
 

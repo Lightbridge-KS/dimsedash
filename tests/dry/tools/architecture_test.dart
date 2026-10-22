@@ -130,6 +130,67 @@ void main() {
     put('lib/features/query/view.dart', 'import "../retrieve/model.dart";');
     expect(checkArchitecture(root), isNotEmpty);
   });
+  for (final feature in ['Query', 'Retrieve']) {
+    final folder = feature.toLowerCase();
+    test('$feature entrypoints preserve access without exposing internal imports', () {
+      put('lib/features/$folder/preview/model.dart', 'class Preview {}');
+      for (final entry in [
+        '$folder.dart',
+        '${folder}_preview.dart',
+        '${folder}_view.dart',
+      ]) {
+        put('lib/features/$folder/$entry', 'export "preview/model.dart";');
+        put('lib/app/app.dart', 'import "../features/$folder/$entry";');
+        expect(checkArchitecture(root), isEmpty);
+      }
+      for (final directive in [
+        'import "../features/$folder/preview/model.dart";',
+        'export "package:dimsedash/features/$folder/preview/model.dart";',
+        'import "../features/$folder/$folder.dart" if (dart.library.io) "../features/$folder/preview/model.dart";',
+      ]) {
+        put('lib/app/app.dart', directive);
+        expect(
+          checkArchitecture(root).join(),
+          contains('$feature public entrypoint'),
+        );
+      }
+    });
+    test('$feature import and export cycles are rejected', () {
+      put('lib/features/$folder/a.dart', 'import "b.dart";');
+      put('lib/features/$folder/b.dart', 'class Preview {}');
+      expect(checkArchitecture(root), isEmpty);
+      put('lib/features/$folder/b.dart', 'export "a.dart";');
+      expect(
+        checkArchitecture(root).join(),
+        contains('$feature import/export cycle'),
+      );
+    });
+    test(
+      '$feature models cannot regain a Flutter or controller dependency',
+      () {
+        final model =
+            'lib/features/$folder/preview/${folder}_preview_model.dart';
+        put(
+          'pubspec.yaml',
+          'dependencies:\n  dimsedash_core: any\n  flutter: any\n',
+        );
+        put(model, 'import "package:dimsedash_core/dimsedash_core.dart";');
+        expect(checkArchitecture(root), isEmpty);
+        put(
+          'lib/features/$folder/preview/controller.dart',
+          'class Controller {}',
+        );
+        for (final directive in [
+          'import "package:flutter/foundation.dart";',
+          'import "dart:ui";',
+          'import "controller.dart";',
+        ]) {
+          put(model, directive);
+          expect(checkArchitecture(root).join(), contains('$feature models'));
+        }
+      },
+    );
+  }
   test('empty app cannot give a green gate', () {
     Directory('${root.path}/lib').deleteSync(recursive: true);
     expect(checkArchitecture(root).join(), contains('not scaffolded'));

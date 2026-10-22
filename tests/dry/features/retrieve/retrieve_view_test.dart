@@ -8,7 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import '../query/query_view_test.dart' show launch, controller, tap;
+import '../../../support/query_workbench_harness.dart'
+    show launch, controller, tap;
 
 RetrievePreviewController retrieve(WidgetTester tester) => tester
     .widget<RetrievePreviewView>(find.byType(RetrievePreviewView))
@@ -191,4 +192,97 @@ void main() {
       },
     );
   }
+  testWidgets(
+    'receipt inspection follows session masking and separate object reveal',
+    (tester) async {
+      final (_, container) = await launch(tester);
+      await enter(tester);
+      await tap(tester, find.text('Choose sample folder'));
+      await tap(tester, find.byKey(const ValueKey('show-retrieve-sample')));
+      await tap(tester, find.text('Inspect headers 1'));
+      expect(find.textContaining('Headers hidden'), findsOneWidget);
+      container.read(revealProvider.notifier).toggle();
+      await tester.pumpAndSettle();
+      expect(find.textContaining('PatientName = SAMPLE^ONLY'), findsOneWidget);
+      container.read(revealProvider.notifier).toggle();
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Headers hidden'), findsOneWidget);
+      expect(find.textContaining('SAMPLE^ONLY'), findsNothing);
+      await tap(tester, find.text('Close'));
+      container.read(revealProvider.notifier).toggle();
+      await tester.pumpAndSettle();
+      await tap(tester, find.text('Thumbnail 1'));
+      expect(find.byIcon(Icons.image_outlined), findsNothing);
+      await tap(tester, find.text('Reveal placeholder'));
+      expect(find.byIcon(Icons.image_outlined), findsOneWidget);
+      container.read(revealProvider.notifier).toggle();
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.image_outlined), findsNothing);
+      expect(
+        tester
+            .widget<TextButton>(
+              find.widgetWithText(TextButton, 'Hide placeholder'),
+            )
+            .onPressed,
+        isNull,
+      );
+      container.read(revealProvider.notifier).toggle();
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.image_outlined), findsOneWidget);
+      await tap(tester, find.text('Hide placeholder'));
+      expect(find.byIcon(Icons.image_outlined), findsNothing);
+    },
+  );
+  testWidgets('failed save inspection exposes neither headers nor thumbnail', (
+    tester,
+  ) async {
+    final (_, container) = await launch(tester);
+    await enter(tester);
+    retrieve(tester).setScenario(RetrieveScenario.saveFailure);
+    await tester.pumpAndSettle();
+    await tap(tester, find.text('Choose sample folder'));
+    await tap(tester, find.byKey(const ValueKey('show-retrieve-sample')));
+    container.read(revealProvider.notifier).toggle();
+    await tester.pumpAndSettle();
+    for (final action in ['Inspect headers 3', 'Thumbnail 3']) {
+      await tap(tester, find.text(action));
+      expect(
+        find.text('Save failed · no saved headers or thumbnail available.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('PatientName ='), findsNothing);
+      expect(find.byIcon(Icons.image_outlined), findsNothing);
+      expect(find.text('Reveal placeholder'), findsNothing);
+      await tap(tester, find.text('Close'));
+    }
+  });
+  testWidgets(
+    'review and evidence restore separate scroll and disclosure state',
+    (tester) async {
+      await launch(tester);
+      await enter(tester);
+      final c = retrieve(tester);
+      await tap(tester, find.text('Advanced Identifier'));
+      await tap(tester, find.text('Choose sample folder'));
+      await tap(tester, find.byKey(const ValueKey('show-retrieve-sample')));
+      final reviewOffset = c.reviewScroll;
+      expect(reviewOffset, greaterThan(0));
+      await tap(tester, find.text('Executed Identifier · synthetic'));
+      await tap(tester, find.text('Review new retrieve'));
+      final runOffset = c.runScroll;
+      expect(runOffset, greaterThan(0));
+      final scroll = find.byKey(const ValueKey('retrieve-scroll'));
+      expect(
+        tester.widget<SingleChildScrollView>(scroll).controller!.offset,
+        closeTo(reviewOffset, 1),
+      );
+      expect(c.expanded['advanced'], isTrue);
+      await tap(tester, find.text('View sample'));
+      expect(
+        tester.widget<SingleChildScrollView>(scroll).controller!.offset,
+        closeTo(runOffset, 1),
+      );
+      expect(c.expanded['executed'], isTrue);
+    },
+  );
 }

@@ -466,6 +466,31 @@ presentation-only implementation with fixed fixtures; it neither introduces the
 planned core query contracts nor calls the operation runner, gateway or stores.
 The controller retains only the current hierarchy and its parent contexts.
 
+Query modularization *(amended 2026-10-22)*:
+
+| Responsibility | Source owner |
+|---|---|
+| Feature imports | `features/query/query.dart`; existing `query_preview.dart` and `query_view.dart` imports remain compatible |
+| Draft/Identifier policy and frozen request/result records | `features/query/preview/query_preview_model.dart` — core configuration and pure Dart only |
+| Session transitions and fixed synthetic fixtures | `features/query/preview/query_preview_controller.dart` — shell-owned lifetime |
+| Provider reads, Run admission, error, scroll and focus lifecycle | `features/query/query_view.dart` |
+| Friendly/advanced/resolved editing | `features/query/widgets/query_composer.dart` |
+| Retained rows, hierarchy, inspection and Retrieve callback | `features/query/widgets/query_results.dart` |
+| Frozen executed context | `features/query/widgets/query_evidence.dart` |
+| Query-local card, notice, masking and dialog presentation | `features/query/widgets/query_display.dart` |
+
+The architecture gate permits outside production imports through the Query
+barrel or its two compatible entrypoints, rejects Query import/export cycles and
+prevents model dependencies on presentation. The public exports forward the same
+declarations; widgets are not re-exported. Query/Retrieve widget tests share the
+workbench harness under `tests/support`, without importing another test entrypoint.
+
+The friendly date fields retain their literal bounds while mounted and follow
+externally changed draft values. Only exact `YYYY-MM-DD` or eight-digit dates
+are normalized into DA bounds; malformed separators stay invalid in the shared
+draft. Calendar/range-order validation remains in the model. The Advanced
+editor's DA range syntax and the public preview interfaces are unchanged.
+
 Composition shares the node header and operation switch through `ui`, preserving
 feature independence. Preview state survives same-node navigation, resets on node
 change/selection loss and never enters SQLite. The runtime continues to own real
@@ -474,6 +499,26 @@ Identifier policy remain the planned core/runtime work above. See the
 [preview tracker](../progress/query-ui-preview.md) for implementation evidence.
 
 ## Retrieve presentation checkpoint
+
+Retrieve modularization *(amended 2026-10-22)*:
+
+| Responsibility | Source owner |
+|---|---|
+| Feature imports | `features/retrieve/retrieve.dart`; existing `retrieve_preview.dart` and `retrieve_view.dart` imports remain compatible |
+| Seeds/drafts, frozen samples and fixed synthetic facts | `features/retrieve/preview/retrieve_preview_model.dart` — core configuration and pure Dart only |
+| Session transitions, readiness and sample retention | `features/retrieve/preview/retrieve_preview_controller.dart` — shell-owned lifetime |
+| Provider reads, fresh admission, route validation and review/run scroll | `features/retrieve/retrieve_view.dart` |
+| Next-request review and UID editing | `features/retrieve/widgets/retrieve_review.dart` |
+| Frozen sample, peer counters and local receipts | `features/retrieve/widgets/retrieve_evidence.dart` |
+| Live session masking and object thumbnail reveal | `features/retrieve/widgets/retrieve_receipt_dialog.dart` |
+| Retrieve-local panels, notices and retained disclosures | `features/retrieve/widgets/retrieve_display.dart` |
+
+Public exports forward the same declarations and exclude internal widgets. The
+entrypoint, model-dependency and cycle rules now cover both Query and Retrieve;
+their existing cross-feature import prohibition remains strict. UID and timeout
+map comparisons use the same entry-equality semantics as before, without requiring
+Flutter in the model. Parent callbacks re-read Echo admission at activation, and
+stale route IDs are checked before rendering a frozen sample.
 
 The synthetic Retrieve preview lives in `lib/features/retrieve`: immutable
 handoff/draft/snapshot types, a bounded in-memory controller, and review/evidence

@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:flutter/foundation.dart' as flutter;
 import 'package:dimsedash/features/retrieve/retrieve_preview.dart';
 import 'package:dimsedash_core/dimsedash_core.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -183,5 +186,48 @@ void main() {
       c.showSample(const AppConfiguration(), echoActive: false),
       contains('no longer selected'),
     );
+  });
+  test('UID map and timeout comparisons preserve entry equality', () {
+    final random = Random(622);
+    for (var i = 0; i < 250; i++) {
+      final a = <String, String>{
+        for (var j = 0; j < random.nextInt(5); j++)
+          'UID$j': '2.25.${random.nextInt(5)}',
+      };
+      final b = i.isEven
+          ? Map<String, String>.fromEntries(a.entries.toList().reversed)
+          : {...a, 'UID${random.nextInt(5)}': '2.25.${random.nextInt(5)}'};
+      final source = RetrieveSeed(
+        sourceId: 'map-$i',
+        node: node,
+        client: config.client,
+        scope: RetrieveScope.study,
+        description: 'Synthetic',
+        uids: a,
+      );
+      expect(
+        RetrieveDraft(seed: source, uids: b).edited,
+        !flutter.mapEquals(a, b),
+      );
+      final first = EchoTimeouts(
+        connect: random.nextInt(100),
+        association: random.nextInt(100),
+      );
+      final second = i.isEven
+          ? first
+          : EchoTimeouts(
+              connect: first.connect + 1,
+              association: first.association,
+            );
+      final client = ClientSettings(timeouts: first);
+      final next = AppConfiguration(
+        node: node,
+        client: ClientSettings(timeouts: second),
+      );
+      expect(
+        retrieveSettingsDiffer(node, client, next),
+        !flutter.mapEquals(first.values, second.values),
+      );
+    }
   });
 }

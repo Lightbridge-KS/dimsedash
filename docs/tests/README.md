@@ -25,6 +25,15 @@ tests/
       support/lock_probe.dart
     features/settings/
       settings_view_test.dart
+    features/query/
+      query_preview_test.dart
+      query_view_test.dart
+      query_public_interface_test.dart
+      query_date_input_test.dart
+    features/retrieve/
+      retrieve_preview_test.dart
+      retrieve_view_test.dart
+      retrieve_public_interface_test.dart
     tools/
       architecture_test.dart
   native/
@@ -32,6 +41,7 @@ tests/
   support/
     memory_config_store.dart
     synthetic_configuration.dart
+    query_workbench_harness.dart
 integration_test -> tests/native
 packages/dimsedash_core/tests/
   configuration_test.dart
@@ -77,6 +87,20 @@ portable entry point. CI invokes `just dry` and does not launch a desktop test.
 - The synthetic configuration builder is shared by persistence and bootstrap.
   Expected values and assertions stay local so fixture reuse cannot make an oracle
   agree with a defect.
+- Query and Retrieve widget suites share `query_workbench_harness.dart`; test
+  entrypoints do not import each other. Query's export test pins identity through
+  both existing imports and the feature barrel. Architecture fixtures reject
+  internal production imports, Query cycles and presentation dependencies in
+  its model library.
+- Query date-input tests distinguish friendly `YYYY-MM-DD`/compact DA dates
+  from Advanced DA ranges. Malformed separator placement blocks Run and editing
+  the other bound cannot silently repair it. Calendar/order checks, blank bounds,
+  editor switching and controller updates remain covered.
+- Retrieve tests pin existing export identity, map/settings equality, immutable
+  snapshots and exact sample behavior. Inspection characterization covers live
+  header masking, separate thumbnail reveal/hide, failed-save inspection and
+  independent review/run scroll and disclosure restoration. The same feature
+  entrypoint, cycle and model-dependency fixtures cover Query and Retrieve.
 - The native configuration flow remains one end-to-end validation/save/runtime-
   reopen scenario. It uses a real desktop app and SQLite, but recreating its runtime
   does not prove an OS process restart or installed-package acceptance.
