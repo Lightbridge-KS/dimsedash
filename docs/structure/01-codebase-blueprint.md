@@ -458,7 +458,38 @@ The generated app/library provenance file is derived from manifests and resolved
 Git source. Final dependency pins and native acceptance are tracked separately
 from local implementation in [S1](../progress/s1-echo.md).
 
-### Query UI preview checkpoint — 2026-10-22
+### S2A production Query checkpoint — 2026-11-04
+
+The normal shell uses `features/query/query.dart` → `QuerySession` / `FindView`.
+`packages/dimsedash_core/src/query` owns immutable `FindIdentifier`, entries,
+resolved request, read-owned metadata, result context and outcome. It depends only
+on configuration and the permitted DICOM dictionary. OperationRunner's Find
+capability depends on query/configuration; the architecture gate admits these
+specific edges without relaxing feature or adapter boundaries.
+
+`FindGateway` is an optional capability alongside `DimseGateway` so Echo-only
+consumers remain compatible. `DartDicomGateway` implements both using one shared
+payload-free observation projection. `find_gateway.dart` privately materializes
+SDK datasets and converts responses to immutable metadata. No mutable SDK dataset
+crosses into UI. The runtime owns subscriptions, cancellation, bounded rows,
+shared admission, durable start, cleanup and the allowlisted history projection.
+Existing tables hold Echo v1 and Find v2 summaries; datasets/criteria/UIDs remain
+session-only. Common typed event records remain v1, associated with their run.
+
+The presentation session holds draft and retained run IDs for at most one hierarchy;
+it does not own network work. Updates batch at 50 ms; rendering is paged at 50 rows.
+The runtime protects active/latest detail and admits up to three retained hierarchy
+contexts under one 32 MiB accounting budget. A pending selection route cannot
+retarget active execution. Retrieval review stores a run ID and row ordinal and
+resolves that retained context, avoiding an unaccounted copy of the result set.
+
+Query and Retrieve remain independent features. The shell maps a typed selection
+to `RetrieveTargetReview` with a frozen context and row; no production transfer
+API exists yet. The following preview implementation is retained for component
+tests/prototypes through `tests/support/preview_shell.dart`, not the normal shell.
+See [S2 tracker](../progress/s2-query.md) for verification and upstream delivery gates.
+
+### Historical Query UI preview checkpoint — 2026-10-22
 
 `features/query` contains immutable preview draft/entry, request snapshot, result
 context and scenario types, plus a shell-owned `QueryPreviewController`. This is a
@@ -494,7 +525,7 @@ editor's DA range syntax and the public preview interfaces are unchanged.
 Composition shares the node header and operation switch through `ui`, preserving
 feature independence. Preview state survives same-node navigation, resets on node
 change/selection loss and never enters SQLite. The runtime continues to own real
-Echo. Production Query state ownership, bounded response streaming and validated
+Echo. At this historical checkpoint, production Query state ownership, bounded response streaming and validated
 Identifier policy remain the planned core/runtime work above. See the
 [preview tracker](../progress/query-ui-preview.md) for implementation evidence.
 

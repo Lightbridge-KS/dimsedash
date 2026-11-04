@@ -11,7 +11,7 @@ read_when:
 >
 > See also: [Surface](03-surface-architecture.md) · [System](01-system-architecture.md) · [Data](02-data-architecture.md) · [Blueprint](../structure/01-codebase-blueprint.md) · [Query design](06-query-workbench-options.md) · [Progress](../progress/overview-first-preview.md)
 >
-> [Interactive comparison](assets/retrieve-options.html) · Screenshots: [A](assets/retrieve-option-a.png), [B](assets/retrieve-option-b.png) · [Original workbench](assets/workbench-v2.html)
+> [Interactive comparison](assets/mockup/retrieve-options.html) · Screenshots: [A](assets/mockup/retrieve-option-a.png), [B](assets/mockup/retrieve-option-b.png) · [Original workbench](assets/mockup/workbench-v2.html)
 
 ## Cheat sheet
 

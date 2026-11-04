@@ -11,7 +11,7 @@ read_when:
 >
 > See also: [Surface](03-surface-architecture.md) · [System](01-system-architecture.md) · [Data](02-data-architecture.md) · [Blueprint](../structure/01-codebase-blueprint.md) · [S2 tracker](../progress/overview-first-preview.md#s2--query-with-friendly-and-exact-identifiers)
 >
-> Interactive comparison: [Query options](assets/query-options.html). Screenshots: [A](assets/query-option-a.png) · [B](assets/query-option-b.png). Historical source: [Workbench v2](assets/workbench-v2.html).
+> Interactive comparison: [Query options](assets/mockup/query-options.html). Screenshots: [A](assets/mockup/query-option-a.png) · [B](assets/mockup/query-option-b.png). Historical source: [Workbench v2](assets/mockup/workbench-v2.html).
 
 ## Cheat sheet
 

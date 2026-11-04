@@ -9,7 +9,7 @@ read_when:
 
 Status: Option A approved, 2026-10-20. This supersedes the separate Workbench destination and picker in the [previous dashboard proposal](04-node-library-options.md). Option B remains a comparison alternative.
 
-[Interactive draft](assets/navigation-options.html) · [Surface architecture](03-surface-architecture.md) · [System architecture](01-system-architecture.md) · [Data architecture](02-data-architecture.md) · [S1 tracker](../progress/s1-echo.md)
+[Interactive draft](assets/mockup/navigation-options.html) · [Surface architecture](03-surface-architecture.md) · [System architecture](01-system-architecture.md) · [Data architecture](02-data-architecture.md) · [S1 tracker](../progress/s1-echo.md)
 
 The node library and workbench form one journey: choose a destination, perform an explicit operation, then return to the library. Separate top-level destinations and a second node picker duplicate that journey. Both proposals remove the standalone Workbench sidebar item and Change node dialog.
 

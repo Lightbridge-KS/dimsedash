@@ -81,7 +81,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 const Divider(height: 32),
                 ...[
                   Text(
-                    'Global Echo timeouts · seconds',
+                    'Global DICOM timeouts · seconds',
                     style: theme.textTheme.titleMedium,
                   ),
                   const SizedBox(height: 16),

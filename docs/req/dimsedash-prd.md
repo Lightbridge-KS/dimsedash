@@ -98,7 +98,7 @@ No implicit probe or automatic retrieve runs when a node is selected. A query re
 
 ### Query criteria and exact identifiers
 
-The intended search workflow covers study date/time, modality, body part, patient ID/name and accession number. Friendly fields and advanced tag entries must resolve to the same request, with no hidden override precedence. Study Root patient attributes can be searched at STUDY level. Modality requires distinguishing study-level `ModalitiesInStudy` from series-level `Modality`; body-part matching may require series queries and peer support. The app exposes the actual level, keys, extra query steps and limitations before execution. A date/time interval must not silently become a different predicate through independent date/time ranges.
+The intended search workflow covers study date/time, modality, body part, patient ID/name and accession number. Friendly fields and advanced tag entries must resolve to the same request, with no hidden override precedence. Study Root patient attributes can be searched at STUDY level. Modality requires distinguishing study-level `ModalitiesInStudy` from series-level `Modality`; body-part matching may require series queries and peer support. Body part is optional and blank by default. At STUDY it is only a pending SERIES criterion; blank SERIES body part imposes no matching restriction, and missing returned body-part values never cause local row exclusion. The app exposes the actual level, keys, extra query steps and limitations before execution. A date/time interval must not silently become a different predicate through independent date/time ranges.
 
 Exact configuration has three distinct meanings:
 
@@ -114,7 +114,7 @@ Tag paths describe sequence structure, not guaranteed searchable fields. Multipl
 
 ## 4. Approved workbench direction
 
-The approved concept is preserved as [standalone reference](assets/approved-workbench.html) and [source fragment](assets/approved-workbench.fragment.html). It contains synthetic scenarios, not a Flutter implementation. Its simulated controls and fabricated history are illustrative. Basic thumbnails were added to the requirements after the original mock was drawn; their absence from that mock does not defer R-10. The [refined workbench proposal](../design/assets/workbench-v2.html) accompanies the [surface draft](../design/03-surface-architecture.md), adding query composition, advanced identifiers, retrieve review and received-object inspection. It remains a review proposal; the original approval is preserved.
+The approved concept is preserved as [standalone reference](assets/approved-workbench.html) and [source fragment](assets/approved-workbench.fragment.html). It contains synthetic scenarios, not a Flutter implementation. Its simulated controls and fabricated history are illustrative. Basic thumbnails were added to the requirements after the original mock was drawn; their absence from that mock does not defer R-10. The [refined workbench proposal](../design/assets/mockup/workbench-v2.html) accompanies the [surface draft](../design/03-surface-architecture.md), adding query composition, advanced identifiers, retrieve review and received-object inspection. It remains a review proposal; the original approval is preserved.
 
 | Area | Approved direction | Detail to resolve in surface design |
 |---|---|---|

@@ -52,6 +52,9 @@ hooks:
 live:
     python3 tools/live/run.py
 
+native-query: versions
+    python3 tools/live/run.py --query
+
 native-echo: versions
     python3 tools/live/run.py --native
 

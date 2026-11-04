@@ -335,7 +335,19 @@ Keep the latest bounded detail window, record how many events/bytes were omitted
 
 Fileless failure receipts need a separate bound because an independent sender can generate them without an outbound run. Pending actions and file-backed receipt inventory are exempt from that failure-history purge. Their growth is instead bounded by receive admission/disk quotas; no quota automatically deletes finalized DICOM files.
 
-Query memory, decoded thumbnail bytes, in-flight instance bytes and action-count limits require explicit measured limits before implementation acceptance. Limit by bytes as well as count; evict thumbnails on demand. Key a thumbnail by file ID/content fingerprint, frame and render parameters/version so changed content cannot reuse an old image. Do not spill full queries or decoded thumbnails to disk as a fallback.
+**S2A Query limits (2026-11-04):** retain at most 1,000 rows per query by default,
+editable from 1–10,000 for the session. Account at most 32 MiB of result payload
+across the current hierarchy and protected active/latest Find context. A 1 MiB
+incoming Identifier limit applies during upstream fragment accumulation, before
+decoding. Reaching a retained row/byte limit requests cancellation and leaves an
+explicitly incomplete result. Presentation updates are coalesced; pages contain
+50 retained rows, not PACS pages. These caps do not bound total process memory or
+PACS work. Query result metadata, criteria and UIDs never spill to SQLite.
+Version-2 Find history projections reuse the existing run/event tables and exclude
+those values; version-1 Echo records remain readable. See the
+[S2A tracker](../progress/s2-query.md) for workload evidence and delivery limits.
+
+Decoded thumbnail bytes, in-flight instance bytes and action-count limits require explicit measured limits before implementation acceptance. Limit by bytes as well as count; evict thumbnails on demand. Key a thumbnail by file ID/content fingerprint, frame and render parameters/version so changed content cannot reuse an old image. Do not spill full queries or decoded thumbnails to disk as a fallback.
 
 The existing library buffers an entire incoming instance before the sink. A sink byte check does not prevent that allocation; pre-allocation bounds/streaming require upstream support. Document the tested workload instead of promising that app-level budgets cap all library memory.
 

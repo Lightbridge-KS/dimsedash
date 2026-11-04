@@ -22,7 +22,7 @@ enum _Destination {
   final IconData icon;
 }
 
-enum _NodePage { library, workspace, run, retrieveReview, retrieveRun }
+enum _NodePage { library, workspace, run, retrieveReview }
 
 typedef _Location = ({
   _Destination page,
@@ -46,8 +46,10 @@ class WorkbenchShell extends ConsumerStatefulWidget {
 class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
   _Location _location = _library;
   _Location _runOrigin = _library;
-  QueryPreviewController? _query;
-  RetrievePreviewController? _retrieve;
+  QuerySession? _query;
+  String? _displayedQueryRunId;
+  ({String runId, int ordinal})? _retrieve;
+  OperationKind _runKind = OperationKind.echo;
   bool _restoreRetrieveFocus = false;
   final _retrieveFocus = FocusNode(debugLabel: 'Review retrieve');
   WorkbenchOperation _operation = WorkbenchOperation.echo;
@@ -58,7 +60,6 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
   @override
   void dispose() {
     _query?.dispose();
-    _retrieve?.dispose();
     _retrieveFocus.dispose();
     _viewRunFocus.dispose();
     super.dispose();
@@ -73,6 +74,14 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
   }
 
   void _allNodes() => _navigate(_library, restoreLibrary: true);
+
+  void _queryContextChanged() {
+    // Parent/child navigation can change evidence ownership without a runtime
+    // event. Rebuild the shell strip only when that displayed run changes.
+    if (mounted && _displayedQueryRunId != _query?.runId) {
+      setState(() => _displayedQueryRunId = _query?.runId);
+    }
+  }
 
   void _destination(_Destination page) {
     if (page == _Destination.nodes) {
@@ -90,6 +99,8 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
   void _viewRun(String runId) {
     // An obsolete run view may link to the newer retained run; preserve its origin.
     if (_location.inner != _NodePage.run) _runOrigin = _location;
+    _runKind =
+        ref.read(echoStateProvider).summary?.operation ?? OperationKind.echo;
     _navigate((
       page: _Destination.nodes,
       inner: _NodePage.run,
@@ -104,9 +115,8 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
     if (origin.nodeId != null && config.node?.id != origin.nodeId) {
       origin = _library;
     }
-    if ((origin.inner == _NodePage.retrieveReview ||
-            origin.inner == _NodePage.retrieveRun) &&
-        _retrieve?.nodeId != origin.nodeId) {
+    if (origin.inner == _NodePage.retrieveReview &&
+        _query?.nodeId != origin.nodeId) {
       origin = _library;
     }
     _navigate(origin, restoreLibrary: origin != _runOrigin);
@@ -124,11 +134,10 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
       if (_query != null && next.selectedNodeId != _query!.nodeId) {
         _query!.dispose();
         _query = null;
-        _retrieve?.dispose();
         _retrieve = null;
         _operation = WorkbenchOperation.echo;
       }
-      _retrieve?.syncConfiguration(next);
+      _query?.syncConfiguration(next);
       if (_location.nodeId != null && next.node?.id != _location.nodeId) {
         _allNodes();
       }
@@ -141,7 +150,11 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
     final displaysEvidence =
         _location.page == _Destination.nodes &&
         ((_location.inner == _NodePage.workspace &&
-                _operation == WorkbenchOperation.echo &&
+                ((_operation == WorkbenchOperation.echo &&
+                        echo.summary?.operation == OperationKind.echo) ||
+                    (_operation == WorkbenchOperation.query &&
+                        echo.summary?.operation == OperationKind.find &&
+                        _query?.runId == echo.summary?.id)) &&
                 echo.request?.node.id == _location.nodeId) ||
             (_location.inner == _NodePage.run &&
                 echo.summary?.id == _location.runId));
@@ -180,7 +193,7 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
                         children: [
                           Expanded(
                             child: Text(
-                              '${echo.active ? 'Echo running' : 'Latest Echo'} · ${echo.request?.node.label ?? 'Frozen target'}',
+                              '${echo.active ? '${echo.summary!.operation == OperationKind.echo ? 'Echo' : 'Query'} running' : 'Latest ${echo.summary!.operation == OperationKind.echo ? 'Echo' : 'Query'}'} · ${echo.request?.node.label ?? 'Frozen target'}',
                             ),
                           ),
                           TextButton(
@@ -190,27 +203,6 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                if (_retrieve?.latest != null &&
-                    _location.page == _Destination.nodes &&
-                    _location.inner != _NodePage.retrieveRun &&
-                    _location.inner != _NodePage.run)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        const Expanded(
-                          child: Text('Latest retrieve preview · synthetic'),
-                        ),
-                        TextButton(
-                          onPressed: () => _showRetrieve(
-                            _NodePage.retrieveRun,
-                            _retrieve!.latest!.id,
-                          ),
-                          child: const Text('View sample'),
-                        ),
-                      ],
                     ),
                   ),
                 Expanded(
@@ -236,31 +228,20 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
                           child: switch (_location.page) {
                             _Destination.nodes => switch (_location.inner) {
                               _NodePage.workspace => _workspace(config),
-                              _NodePage.run => EchoRunView(
-                                key: ValueKey(_location.runId),
-                                runId: _location.runId!,
-                                onBack: _backFromRun,
-                              ),
-                              _NodePage.retrieveReview ||
-                              _NodePage.retrieveRun => RetrievePreviewView(
-                                key: ValueKey(
-                                  '${_location.inner}-${_location.runId}',
-                                ),
-                                controller: _retrieve!,
-                                sampleId:
-                                    _location.inner == _NodePage.retrieveRun
-                                    ? _location.runId
-                                    : null,
-                                header: WorkbenchHeader(
-                                  config: config,
-                                  nodeId: _location.nodeId!,
-                                  onBack: _backToResults,
-                                  backLabel: 'Back to results',
-                                ),
-                                onSample: (id) =>
-                                    _showRetrieve(_NodePage.retrieveRun, id),
-                                onReview: () =>
-                                    _showRetrieve(_NodePage.retrieveReview),
+                              _NodePage.run =>
+                                _runKind == OperationKind.find
+                                    ? FindRunView(
+                                        key: ValueKey(_location.runId),
+                                        runId: _location.runId!,
+                                        onBack: _backFromRun,
+                                      )
+                                    : EchoRunView(
+                                        key: ValueKey(_location.runId),
+                                        runId: _location.runId!,
+                                        onBack: _backFromRun,
+                                      ),
+                              _NodePage.retrieveReview => _retrieveReview(
+                                config,
                               ),
                               _NodePage.library => const SizedBox.shrink(),
                             },
@@ -301,9 +282,9 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
         onBack: _allNodes,
         workspaceHeader: header,
       ),
-      WorkbenchOperation.query => QueryPreviewView(
+      WorkbenchOperation.query => FindView(
         key: ValueKey(_location.nodeId),
-        controller: _query!,
+        session: _query!,
         header: header,
         onRetrieve: _reviewRetrieve,
         retrieveFocus: _retrieveFocus,
@@ -312,42 +293,49 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
     };
   }
 
-  void _reviewRetrieve(QueryRetrieveSelection selection) {
-    final request = selection.result.request;
-    final level = request.draft.level;
-    final row = selection.row;
-    if (ref.read(configurationProvider).node?.id != request.node.id ||
-        !row.canTarget(level)) {
-      return;
-    }
-    _retrieve ??= RetrievePreviewController(request.node.id);
-    final seed = RetrieveSeed(
-      sourceId:
-          '${selection.result.sequence}-${level.name}-${row.studyUid}-${row.seriesUid}-${row.sopUid}',
-      node: request.node,
-      client: request.client,
-      scope: RetrieveScope.values.byName(level.name),
-      description: row.description,
-      uids: {
-        'StudyInstanceUID': row.studyUid!,
-        if (level != QueryLevel.study) 'SeriesInstanceUID': row.seriesUid!,
-        if (level == QueryLevel.image) 'SOPInstanceUID': row.sopUid!,
-      },
+  Widget _retrieveReview(AppConfiguration config) {
+    final target = _retrieve;
+    final result = target == null
+        ? null
+        : ref.read(operationRunnerProvider)?.findResult(target.runId);
+    final row = result?.rows
+        .where((r) => r.ordinal == target!.ordinal)
+        .firstOrNull;
+    final header = WorkbenchHeader(
+      config: config,
+      nodeId: _location.nodeId!,
+      onBack: _backToResults,
+      backLabel: 'Back to results',
     );
-    if (_retrieve!.open(seed)) _showRetrieve(_NodePage.retrieveReview);
+    if (result == null || row == null) {
+      return ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          header,
+          const Text(
+            'This query target is no longer retained. Return to results and query again.',
+          ),
+        ],
+      );
+    }
+    return RetrieveTargetReview(result: result, row: row, header: header);
   }
 
-  void _showRetrieve(_NodePage page, [String? id]) {
-    final nodeId = _retrieve?.nodeId;
-    if (nodeId == null || ref.read(configurationProvider).node?.id != nodeId) {
+  void _reviewRetrieve(QuerySelection selection) {
+    if (selection.result.request.targetChanged(
+          ref.read(configurationProvider),
+        ) ||
+        selection.row.targetProblem(selection.result.request.identifier) !=
+            null) {
       return;
     }
+    _retrieve = (runId: selection.result.runId, ordinal: selection.row.ordinal);
     _restoreRetrieveFocus = false;
     _navigate((
       page: _Destination.nodes,
-      inner: page,
-      nodeId: nodeId,
-      runId: id,
+      inner: _NodePage.retrieveReview,
+      nodeId: selection.result.request.node.id,
+      runId: null,
     ));
   }
 
@@ -398,8 +386,9 @@ class _WorkbenchShellState extends ConsumerState<WorkbenchShell> {
       }
       if (_query?.nodeId != node.id) {
         _query?.dispose();
-        _query = QueryPreviewController(node.id);
-        _retrieve?.dispose();
+        _query = QuerySession(node.id, ref.read(operationRunnerProvider));
+        _displayedQueryRunId = null;
+        _query!.addListener(_queryContextChanged);
         _retrieve = null;
         _restoreRetrieveFocus = false;
         _operation = WorkbenchOperation.echo;

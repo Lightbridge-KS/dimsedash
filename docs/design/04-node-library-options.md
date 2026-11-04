@@ -9,7 +9,7 @@ read_when:
 
 Status: dashboard Option A approved 2026-10-20; its separate Workbench destination and picker are superseded by the [approved nested-workbench refinement](05-navigation-simplification.md). This document and its prototype retain the earlier comparison and rationale.
 
-[Interactive comparison](assets/node-library-options.html) · [Approved surface](03-surface-architecture.md) · [S1 tracker](../progress/s1-echo.md)
+[Interactive comparison](assets/mockup/node-library-options.html) · [Approved surface](03-surface-architecture.md) · [S1 tracker](../progress/s1-echo.md)
 
 The previous sidebar grew with the number of nodes, pushing navigation below configuration content. Both options make the sidebar a stable navigation surface and move node management into the main workspace. The existing blue palette, local identity, explicit networking and runtime ownership remain intact.
 

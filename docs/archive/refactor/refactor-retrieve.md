@@ -8,7 +8,10 @@ date: 2026-10-22
 
 # Retrieve refactoring
 
-Parent: [First-preview tracker](../overview-first-preview.md) · Design: [Blueprint](../../structure/01-codebase-blueprint.md)
+Archived 2026-11-04. Completed in `43e6859` on 2026-10-22. This record
+describes that revision; it is not an active implementation tracker.
+
+Parent: [First-preview tracker](../../progress/overview-first-preview.md) · Design: [Blueprint](../../structure/01-codebase-blueprint.md)
 
 Baseline: `07b181a` plus the verified Query/date refactoring. Local refactoring
 and verification completed 2026-10-22.

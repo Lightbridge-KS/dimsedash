@@ -55,7 +55,7 @@ void main() {
     await tester.pumpAndSettle();
     final stay = tester.binding.handleRequestAppExit();
     await tester.pumpAndSettle();
-    expect(find.text('Echo is running'), findsOneWidget);
+    expect(find.text('An operation is running'), findsOneWidget);
     await tester.tap(find.text('Stay'));
     await tester.pumpAndSettle();
     expect(await stay, AppExitResponse.cancel);

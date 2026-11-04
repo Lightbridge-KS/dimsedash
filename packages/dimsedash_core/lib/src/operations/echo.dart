@@ -5,6 +5,9 @@ import '../configuration/configuration.dart';
 import '../configuration/configuration_validation.dart';
 import '../configuration/config_store.dart';
 import '../foundation/result.dart';
+import '../query/query.dart';
+
+part 'find_runner.dart';
 
 final class ResolvedEchoRequest {
   const ResolvedEchoRequest({
@@ -166,6 +169,8 @@ abstract interface class DimseGateway {
   );
 }
 
+enum OperationKind { echo, find }
+
 final class RunSummary {
   const RunSummary({
     required this.id,
@@ -178,6 +183,12 @@ final class RunSummary {
     required this.libraryVersion,
     this.ended,
     this.outcome,
+    this.operation = OperationKind.echo,
+    this.findLevel,
+    this.rowLimit,
+    this.retained = 0,
+    this.findOutcome,
+    this.limitReached = false,
     this.stopRequested = false,
     this.omitted = 0,
     this.historyDropped = 0,
@@ -194,11 +205,17 @@ final class RunSummary {
   final EchoTimeouts timeouts;
   final String appVersion, libraryVersion;
   final EchoOutcome? outcome;
+  final OperationKind operation;
+  final FindLevel? findLevel;
+  final int? rowLimit;
+  final int retained;
+  final FindOutcome? findOutcome;
+  final bool limitReached;
   final bool stopRequested, historyAvailable;
   final int omitted, historyDropped;
   Map<String, Object?> toHistory() => {
-    'v': 1,
-    'operation': 'echo',
+    'v': operation == OperationKind.echo ? 1 : 2,
+    'operation': operation.name,
     'elapsedMicros': elapsedMicros,
     'nodeRevision': nodeRevision,
     'configurationRevision': configurationRevision,
@@ -207,10 +224,23 @@ final class RunSummary {
     'timeouts': timeouts.values,
     'appVersion': appVersion,
     'libraryVersion': libraryVersion,
-    'disposition': outcome?.disposition.name,
-    'status': outcome?.status,
-    'failure': outcome?.failure?.name,
-    'cleanupFailed': outcome?.cleanupFailed,
+    'disposition': findOutcome?.disposition.name ?? outcome?.disposition.name,
+    'status': findOutcome?.status ?? outcome?.status,
+    'failure': findOutcome?.failure?.name ?? outcome?.failure?.name,
+    'cleanupFailed': findOutcome?.cleanupFailed ?? outcome?.cleanupFailed,
+    if (operation == OperationKind.find) ...{
+      'model': 'studyRoot',
+      'level': findLevel?.name,
+      'rowLimit': rowLimit,
+      'retained': retained,
+      'received': findOutcome?.responses,
+      'limitReached': limitReached,
+      'cancelRequested': findOutcome?.cancelRequested,
+      'cancellationConfirmed': findOutcome?.cancellationConfirmed,
+      'optionalKeysUnsupported': findOutcome?.optionalKeysUnsupported,
+      'sessionByteLimit': findSessionByteLimit,
+      'identifierByteLimit': findIdentifierByteLimit,
+    },
     'stopRequested': stopRequested,
     'liveOmitted': omitted,
     'historyDroppedBeforeWrite': historyDropped,
@@ -288,6 +318,10 @@ final class OperationRunner {
       _historyAvailable = true,
       _stopRequested = false;
   GatewayRun? _transport;
+  FindGatewayRun? _findTransport;
+  final _findBuffers = <String, _FindBuffer>{};
+  Set<String> _retainedFindIds = {};
+  Timer? _publishTimer;
   Future<void>? _running;
   Future<void> _writes = Future.value();
   final List<EchoObservation> _events = [];
@@ -299,30 +333,44 @@ final class OperationRunner {
   bool get active => _occupied;
 
   Completer<void>? _admission;
-  Future<Result<RunHandle>> start(int expectedConfigurationRevision) async {
+  Future<Result<RunHandle>> start(int expectedConfigurationRevision) =>
+      _startOperation(expectedConfigurationRevision);
+
+  Future<Result<RunHandle>> startFind(
+    int expectedConfigurationRevision,
+    FindIdentifier identifier,
+  ) => _startOperation(expectedConfigurationRevision, identifier);
+
+  Future<Result<RunHandle>> _startOperation(
+    int expectedConfigurationRevision, [
+    FindIdentifier? identifier,
+  ]) async {
     if (_occupied || _closing) {
       return const Failure(
         AppFailure(
           FailureKind.busy,
-          'An Echo is already running or shutting down.',
+          'An outbound operation is already running or shutting down.',
         ),
       );
     }
     final admission = Completer<void>();
     _admission = admission;
     try {
-      return await _start(expectedConfigurationRevision);
+      return await _start(expectedConfigurationRevision, identifier);
     } finally {
       admission.complete();
     }
   }
 
-  Future<Result<RunHandle>> _start(int expectedConfigurationRevision) async {
+  Future<Result<RunHandle>> _start(
+    int expectedConfigurationRevision,
+    FindIdentifier? identifier,
+  ) async {
     if (_closing || _occupied) {
       return const Failure(
         AppFailure(
           FailureKind.busy,
-          'An Echo is already running or shutting down.',
+          'An outbound operation is already running or shutting down.',
         ),
       );
     }
@@ -349,9 +397,24 @@ final class OperationRunner {
       return const Failure(
         AppFailure(
           FailureKind.validation,
-          'Select a valid saved node before running Echo.',
+          'Select a valid saved node before running an operation.',
         ),
       );
+    }
+    if (identifier != null) {
+      if (gateway is! FindGateway) {
+        _occupied = false;
+        return const Failure(
+          AppFailure(FailureKind.validation, 'Find gateway is unavailable.'),
+        );
+      }
+      final problem =
+          identifier.validation ??
+          (gateway as FindGateway).validateFind(identifier);
+      if (problem != null) {
+        _occupied = false;
+        return Failure(AppFailure(FailureKind.validation, problem));
+      }
     }
     if (!_historyAvailable) {
       final check = await store.checkAvailable();
@@ -359,7 +422,7 @@ final class OperationRunner {
         _occupied = false;
         return Failure(check.error);
       }
-      if (_summary?.outcome != null) {
+      if (_summary?.outcome != null || _summary?.findOutcome != null) {
         final retried = await store.finish(_summary!);
         if (retried is Failure<void>) {
           _occupied = false;
@@ -381,6 +444,9 @@ final class OperationRunner {
     );
     _clock = Stopwatch()..start();
     final summary = RunSummary(
+      operation: identifier == null ? OperationKind.echo : OperationKind.find,
+      findLevel: identifier?.level,
+      rowLimit: identifier?.rowLimit,
       id: newId(),
       nodeId: request.node.id,
       nodeRevision: request.node.revision,
@@ -404,14 +470,40 @@ final class OperationRunner {
     _request = request;
     _summary = summary;
     _activeId = summary.id;
-    _publish();
+    if (identifier != null) {
+      _findBuffers[summary.id] = _FindBuffer(
+        ResolvedFindRequest(
+          node: config.node!,
+          client: config.client,
+          configurationRevision: config.revision,
+          identifier: identifier,
+        ),
+      );
+    }
+    _pruneFindBuffers();
+    _publishNow();
     final completed = Completer<void>();
     _running = completed.future;
     if (_closing || _stopRequested) {
       unawaited(
-        _complete(const EchoOutcome(EchoDisposition.stopped))
-            .whenComplete(completed.complete),
+        _complete(
+          identifier == null
+              ? const EchoOutcome(EchoDisposition.stopped)
+              : null,
+          findOutcome: identifier == null
+              ? null
+              : const FindOutcome(
+                  disposition: FindDisposition.stopped,
+                  cancelRequested: true,
+                ),
+        ).whenComplete(completed.complete),
       );
+      return Success(
+        RunHandle(summary.id, completed.future, () => _stopRun(summary.id)),
+      );
+    }
+    if (identifier != null) {
+      _running = _executeFind(summary.id).whenComplete(completed.complete);
       return Success(
         RunHandle(summary.id, completed.future, () => _stopRun(summary.id)),
       );
@@ -440,6 +532,7 @@ final class OperationRunner {
     if (!_occupied || _stopRequested) return;
     _stopRequested = true;
     _transport?.stop();
+    _findTransport?.cancel();
     _publish();
   }
 
@@ -453,6 +546,7 @@ final class OperationRunner {
       })().timeout(const Duration(seconds: 4));
     } on TimeoutException {
       _transport?.forceClose();
+      _findTransport?.forceClose();
     }
     // A still-pending durable record is reconciled on restart, never retried.
   }
@@ -474,9 +568,17 @@ final class OperationRunner {
     await _complete(outcome);
   }
 
-  Future<void> _complete(EchoOutcome outcome) async {
+  Future<void> _complete(
+    EchoOutcome? outcome, {
+    FindOutcome? findOutcome,
+  }) async {
     await _writes;
     final s = _summary!;
+    final buffer = _findBuffers[s.id];
+    if (buffer != null) {
+      buffer.outcome = findOutcome;
+      buffer.active = false;
+    }
     _summary = RunSummary(
       id: s.id,
       nodeId: s.nodeId,
@@ -489,6 +591,12 @@ final class OperationRunner {
       appVersion: s.appVersion,
       libraryVersion: s.libraryVersion,
       outcome: outcome,
+      operation: s.operation,
+      findLevel: s.findLevel,
+      rowLimit: s.rowLimit,
+      findOutcome: findOutcome,
+      retained: buffer?.rows.length ?? 0,
+      limitReached: buffer?.limitReached ?? false,
       stopRequested: _stopRequested,
       omitted: _omitted,
       historyDropped: _historyDropped,
@@ -499,6 +607,8 @@ final class OperationRunner {
     _occupied = false;
     _activeId = null;
     _transport = null;
+    _findTransport = null;
+    _pruneFindBuffers();
     _publish();
   }
 
@@ -537,6 +647,19 @@ final class OperationRunner {
 
   int _pendingWrites = 0;
   void _publish() {
+    if (_summary?.operation == OperationKind.find && _occupied) {
+      _publishTimer ??= Timer(const Duration(milliseconds: 50), () {
+        _publishTimer = null;
+        _publishNow();
+      });
+    } else {
+      _publishTimer?.cancel();
+      _publishTimer = null;
+      _publishNow();
+    }
+  }
+
+  void _publishNow() {
     _state = EchoState(
       request: _request,
       summary: _summary,

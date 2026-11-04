@@ -19,9 +19,9 @@ Resolved direct pins: Riverpod 3.4.3, Drift 2.35.2, drift_dev 2.35.1,
 sqlite3 3.7.1, build_runner 2.16.1, analyzer 13.3.0 and test 1.31.1.
 The analyzer/test/build-runner versions intentionally satisfy both Drift and the
 Flutter SDK's test_api pin. Newest versions are not necessarily mutually compatible.
-DICOM packages use the public `v0.1.0-dev.2` tag at
-`53ee5ec9c204e58382bf9235a621eb05af8d4179`; the root Git override ensures one
-shared `dartdicom` value package. S1 needs no local library checkout.
+DICOM packages use the public merged Find commit
+`32f0f90f4cd36cb643663c23b2b47943c9b0f7c5`; the root Git override ensures one
+shared `dartdicom` value package. No local library checkout is required.
 
 Developer command versions verified for S0: just 1.53.0, prek 0.5.5,
 gitleaks 8.30.1. Hook hygiene tools pin pre-commit-hooks 6.0.0 through `uvx`.
@@ -102,10 +102,11 @@ manifest dependencies. Tests may instantiate concrete adapters. Extend its expli
 module policy with the blueprint when adding a capability; do not weaken it to make
 a forbidden import pass.
 
-## S1 dependencies and diagnostic provenance
+## DICOM dependencies and diagnostic provenance
 
-All three DICOM libraries resolve from the GitHub-only `v0.1.0-dev.2` tag to
-`53ee5ec9c204e58382bf9235a621eb05af8d4179`. The root `dartdicom` Git override
+All three DICOM libraries resolve from public Git commit
+`32f0f90f4cd36cb643663c23b2b47943c9b0f7c5`. This includes Find APIs added after
+the dev.2 release; package versions remain `0.1.0-dev.2`. The root `dartdicom` Git override
 aligns the library's transitive dependency with the pure-Dart core's Git source;
 it is required and must remain a Git source. A sibling checkout is not required.
 
@@ -141,3 +142,10 @@ without deleting the historical summary or changing a live request.
 
 See the [Echo verification runbook](../tests/s1-echo.md) for independent loopback
 fixtures and native/release checks.
+
+## S2A Query
+
+Real Query uses additive upstream Find APIs from the pinned public commit.
+See [S2A verification](../tests/s2-query.md). Global DICOM timeouts
+reuse the stored S1 values. Find v2 summaries coexist with Echo v1 records in the
+existing tables; there is no new schema or persisted query-result catalogue.

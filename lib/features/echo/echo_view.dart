@@ -32,7 +32,8 @@ class _EchoViewState extends ConsumerState<EchoView> {
     final node = config.node;
     final validTarget = node != null && node.id == widget.nodeId;
     final ownsEvidence =
-        state.summary != null && state.request?.node.id == widget.nodeId;
+        state.summary?.operation == OperationKind.echo &&
+        state.request?.node.id == widget.nodeId;
     return EchoEvidence(
       state: ownsEvidence ? state : null,
       emptyMessage: 'No retained Echo evidence for this node',
@@ -79,7 +80,11 @@ class _EchoViewState extends ConsumerState<EchoView> {
                       });
                     },
               icon: const Icon(Icons.play_arrow),
-              label: Text(state.active ? 'Echo running' : 'Run Echo'),
+              label: Text(
+                state.active && state.summary?.operation == OperationKind.echo
+                    ? 'Echo running'
+                    : 'Run Echo',
+              ),
             ),
             if (ownsEvidence)
               OutlinedButton(
