@@ -1,4 +1,4 @@
-"""Loopback synthetic failure peers; no image data is accepted or generated."""
+"""Loopback synthetic DIMSE failure peers with bounded Query fixtures."""
 
 import argparse
 import signal
@@ -6,10 +6,12 @@ import socket
 import threading
 import time
 from pynetdicom import AE, evt
-from pynetdicom.sop_class import Verification, CTImageStorage
+from pynetdicom.sop_class import Verification, CTImageStorage, StudyRootQueryRetrieveInformationModelFind
+from pydicom.dataset import Dataset
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--base-port", type=int, default=4250)
+parser.add_argument("--echo-delay", type=float, default=3)
 args = parser.parse_args()
 servers = []
 listeners = []
@@ -21,7 +23,7 @@ def echo(event):
 
 
 def delayed_echo(event):
-    time.sleep(3)
+    time.sleep(args.echo_delay)
     return 0x0000
 
 
@@ -30,15 +32,74 @@ def abort_echo(event):
     return 0x0000
 
 
-def serve(offset, handler=echo, context=Verification, strict=False):
+def find_response(event):
+    ds = Dataset()
+    ds.QueryRetrieveLevel = event.identifier.QueryRetrieveLevel
+    ds.StudyInstanceUID = "2.25.8000.1"
+    ds.PatientID = "SYNTH-1"
+    ds.PatientName = "SYNTHETIC^1"
+    yield 0xFF01, ds
+    yield 0x0000, None
+
+
+def find_failure(event):
+    yield next(find_response(event))
+    yield 0xA700, None
+
+
+def find_delayed(event):
+    yield next(find_response(event))
+    for _ in range(50):
+        if event.is_cancelled:
+            yield 0xFE00, None
+            return
+        time.sleep(0.02)
+    yield 0x0000, None
+
+
+def find_abort(event):
+    yield next(find_response(event))
+    event.assoc.abort()
+
+
+def find_oversize(event):
+    ds = Dataset()
+    ds.StudyInstanceUID = "2.25.8000.1"
+    ds.add_new(0x0040A160, "UT", "X" * (1024 * 1024 + 1))
+    yield 0xFF00, ds
+
+
+def find_charset(event):
+    ds = Dataset()
+    ds.SpecificCharacterSet = "ISO 2022 IR 87"
+    ds.StudyInstanceUID = "2.25.8000.1"
+    ds.PatientName = "SYNTHETIC"
+    yield 0xFF00, ds
+
+
+def find_missing(event):
+    ds = Dataset()
+    ds.PatientName = "SYNTHETIC^NO_UID"
+    yield 0xFF00, ds
+
+
+def find_ignored(event):
+    yield next(find_response(event))
+    time.sleep(3)
+    yield 0x0000, None
+
+
+def serve(offset, handler=echo, context=Verification, strict=False, find_handler=find_response):
     ae = AE(ae_title="PACS_AET")
     ae.add_supported_context(context)
+    if context == Verification:
+        ae.add_supported_context(StudyRootQueryRetrieveInformationModelFind)
     ae.require_called_aet = strict
     servers.append(
         ae.start_server(
             ("127.0.0.1", args.base_port + offset),
             block=False,
-            evt_handlers=[(evt.EVT_C_ECHO, handler)],
+            evt_handlers=[(evt.EVT_C_ECHO, handler), (evt.EVT_C_FIND, find_handler)],
         )
     )
 
@@ -48,6 +109,14 @@ serve(1, context=CTImageStorage)
 serve(3, handler=delayed_echo)
 serve(4, handler=abort_echo)
 serve(6)  # Backend for release-failure proxy.
+serve(7)
+serve(8, find_handler=find_failure)
+serve(9, find_handler=find_delayed)
+serve(10, find_handler=find_abort)
+serve(11, find_handler=find_oversize)
+serve(12, find_handler=find_charset)
+serve(13, find_handler=find_missing)
+serve(14, find_handler=find_ignored)
 
 
 def receive_exact(conn, count):

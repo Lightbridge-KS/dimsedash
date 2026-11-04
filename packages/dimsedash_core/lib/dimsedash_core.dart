@@ -6,3 +6,5 @@ export 'src/configuration/config_store.dart';
 export 'src/foundation/result.dart';
 
 export 'src/operations/echo.dart';
+
+export 'src/query/query.dart';

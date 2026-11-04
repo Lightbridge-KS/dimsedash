@@ -16,6 +16,12 @@ This is the durable implementation plan and status record. Architecture remains 
 
 ## Now / Next
 
+**S2A PR delivery (2026-11-05):** [S2A real Query](s2-query.md) replaces
+synthetic execution with Study Root C-FIND. The upstream contract has merged and
+all public dependency refs now pin its merge commit. Body part is optional.
+S2B complete Identifier editing and all deferred native acceptance remain pending.
+Verification and remaining delivery gates are recorded in the S2 tracker.
+
 **Now:** the S0–S8 sequence and Study Root-only preview scope are approved (2026-10-19). The platform/distribution baseline is approved (2026-10-19). The Settings simplification is approved (2026-10-20): global local identity/listen port/timeouts/appearance belong to Settings, remote fields to Nodes; `DIMSE_DASH` remains the default local AE. S1 is landed on `main` at `40b1563`, using published upstream `v0.1.0-dev.2`. A fresh remote clone passed the macOS dry/live/native/release matrix and stayed clean; hosted macOS 15 and Ubuntu 24.04 dry gates passed on the implementation commit. Manual desktop acceptance, including the deferred S0 checks, remains pending.
 
 **S0 acceptance pending:** S0 — shell, persistent Settings, failure handling and executable gates are implemented. Automated UI/SQLite checks pass on macOS and Ubuntu 24.04 under Xvfb. Remaining native acceptance is pending and deferred for now (2026-10-19): real-keyboard/process-restart acceptance on macOS and stock Ubuntu 24.04 GNOME Wayland/Xorg acceptance. The support baseline is unchanged. See [S0 evidence/runbook](../tests/s0-configuration.md). S1 now provides Echo as the first real network tracer bullet; Echo alone is not a public-preview release.
@@ -30,7 +36,7 @@ Global saves preserve node rows/revisions/selection. Local dry gates (76 Flutter
 commit hooks passed; hosted CI for this refinement is not yet verified. Manual
 desktop acceptance stays pending.
 
-**Current evidence:** [S1 — node management and Echo](s1-echo.md) records implementation `40b1563`, committed-clone checks, hosted CI and remaining manual acceptance. All DICOM refs target `v0.1.0-dev.2` at `53ee5ec9c204e58382bf9235a621eb05af8d4179`. Later production slices remain pending; Query and Retrieve presentation-only checkpoints are tracked separately below.
+**Current evidence:** [S1 — node management and Echo](s1-echo.md) records implementation `40b1563`, committed-clone checks, hosted CI and remaining manual acceptance. All DICOM refs target `v0.1.0-dev.2` at `53ee5ec9c204e58382bf9235a621eb05af8d4179`. S2A paired implementation and the earlier Query/Retrieve presentation checkpoints are tracked separately below.
 
 **Preview finish line:** configure → Find → select one study/series/instance → review exact Identifier → C-GET or C-MOVE → receive/save → inspect headers and a supported thumbnail → inspect/export truthful evidence. The complete workflow must run in packaged macOS and Linux apps with failure, retention and restart behavior verified.
 
@@ -79,7 +85,7 @@ Evidence: [Flutter platform matrix](https://docs.flutter.dev/reference/supported
 |---|---|---|---|---|
 | S0 | Launch, configure and reopen | Initial platform baseline | R-01, R-15, R-17, R-18 | In progress |
 | S1 | Manage nodes and diagnose an Echo exchange | S0; U1 observations | R-01, R-02, R-11–R-13, R-15 | S1 landed; navigation and Settings refinements committed in `80ede60` |
-| S2 | Find and inspect an exact study/series/instance subset | S1; U2 Find terminal evidence | R-03, R-04, R-09, R-12, R-16, R-19 | Not started |
+| S2 | Find and inspect an exact study/series/instance subset | S1; U2 Find terminal evidence | R-03, R-04, R-09, R-12, R-16, R-19 | S2A implemented for local review; S2B and delivery pending |
 | S3 | Independently receive and durably save DICOM objects | S1; U3 storage contract | R-07, R-08, R-12, R-15, R-16 | Not started |
 | S4 | Retrieve a reviewed target through C-GET | S2 + S3; U2 retrieve evidence | R-04, R-06, R-08, R-12, R-19 | Not started |
 | S5 | Retrieve through C-MOVE with honest callback correlation | S4; U3 originator/context evidence | R-05, R-07, R-08, R-11, R-12 | Not started |
@@ -125,20 +131,25 @@ Detailed source/evidence state: [S1 tracker](s1-echo.md). Implementation and aut
 
 ### S2 — Query with friendly and exact identifiers
 
-**UI-only checkpoint (2026-10-22):** Option A is implemented, locally verified and approved for delivery to `main`. [Query preview tracker](query-ui-preview.md) records dry/native gates and visual evidence. Real S2 networking and complete Identifier editing remain unstarted.
+**S2A review checkpoint:** [implementation and evidence](s2-query.md). The approved first
+checkpoint implements real common-key querying; S2 closes only after S2B and its
+remaining acceptance gates. Earlier synthetic receipts below remain unchanged.
 
-Query modularization and a separately verified friendly-date input correction
-are tracked in [Query refactoring](refactor/refactor-query.md). These changes do
-not implement production S2 or alter the remaining desktop acceptance scope.
+**UI-only checkpoint (2026-10-22):** Option A is implemented, locally verified and approved for delivery to `main`. [Query preview tracker](query-ui-preview.md) records dry/native gates and visual evidence. At that checkpoint, real networking and complete Identifier editing were unstarted. S2A now supersedes its normal-app synthetic execution.
 
-**Design review (2026-10-22):** [Query workbench options](../design/06-query-workbench-options.md) reconcile the original HTML with the implemented nested Nodes workbench and global-only Settings. The full-width composer (A) is approved; the side composer remains a comparison alternative. The [interactive prototype](../design/assets/query-options.html) uses fixed synthetic responses and no networking. The approved UI-only implementation is tracked separately above; production S2 remains pending and the S2 checkboxes below are unchanged. Browser checks passed for common advanced/filter value sharing, masked/revealed identifiers, explicit SERIES/IMAGE entry and required parent UIDs, parent-row restoration, empty/failure/partial fixture states, both layouts and light/dark appearance. At a measured 760 × 600 CSS viewport both options stack without workspace horizontal overflow; wide layout was inspected at 1440 × 1200. Prototype JavaScript syntax and `git diff --check` passed; no console errors were observed during those checks. These checks do not establish Flutter, native accessibility or real DIMSE behavior.
+Query modularization and the friendly-date input correction landed in `43e6859`.
+The [archived Query refactoring record](../archive/refactor/refactor-query.md)
+preserves their verification evidence. These changes did not implement production
+S2 or alter the remaining desktop acceptance scope.
+
+**Design review (2026-10-22):** [Query workbench options](../design/06-query-workbench-options.md) reconcile the original HTML with the implemented nested Nodes workbench and global-only Settings. The full-width composer (A) is approved; the side composer remains a comparison alternative. The [interactive prototype](../design/assets/mockup/query-options.html) uses fixed synthetic responses and no networking. The approved UI-only implementation is tracked separately above; production S2 remains pending and the S2 checkboxes below are unchanged. Browser checks passed for common advanced/filter value sharing, masked/revealed identifiers, explicit SERIES/IMAGE entry and required parent UIDs, parent-row restoration, empty/failure/partial fixture states, both layouts and light/dark appearance. At a measured 760 × 600 CSS viewport both options stack without workspace horizontal overflow; wide layout was inspected at 1440 × 1200. Prototype JavaScript syntax and `git diff --check` passed; no console errors were observed during those checks. These checks do not establish Flutter, native accessibility or real DIMSE behavior.
 
 **Demo:** query a synthetic date/modality/patient/accession subset; navigate studies → series → instances, refine a series-level body-part query, inspect returned headers, and review one instance's complete UID hierarchy.
 
 - [ ] Build the immutable Identifier model and shared friendly/advanced editor, numeric tag/VR/value validation, matching/return-key distinction, private context, nested same-item sequence groups and resolved tree. Add capability/unknown warnings without inventing peer support.
-- [ ] Implement explicit Study Root STUDY/SERIES/IMAGE Find and result navigation. Keep study versus series filter placement accurate; do not emulate unsupported remote filtering with a hidden local rule engine.
-- [ ] Keep query results and literal drafts bounded in session memory; clear stale target context on applied connection changes. Separate inspector focus from target selection. Inspect nested query metadata with search and charset limitations.
-- [ ] Distinguish no matches, incomplete results, final failure, limit-triggered cancellation, user cancellation and abort using U2. Check navigation/disposal cannot pause or cancel the protocol subscription.
+- [x] Implement explicit Study Root STUDY/SERIES/IMAGE Find and result navigation. Keep study versus series filter placement accurate; do not emulate unsupported remote filtering with a hidden local rule engine.
+- [x] Keep query results and literal drafts bounded in session memory; clear stale target context on applied connection changes. Separate inspector focus from target selection. Inspect nested query metadata with search and charset limitations.
+- [x] Distinguish no matches, incomplete results, final failure, limit-triggered cancellation, user cancellation and abort using U2. Check navigation/disposal cannot pause or cancel the protocol subscription.
 - [ ] Verify friendly/advanced equivalence, invalid enabled entries, private/nested values, missing parent UID, exact IMAGE hierarchy, result limits and sensitive-canary exclusion. Demonstrate the actual scoped Find workflow on both platforms.
 
 **Exit:** every displayed target is tied to its originating node/query/parents; preview equals the materialized request. No missing UID broadens selection. Complex editor capabilities are implemented here, not postponed behind a basic-filter-only preview.
@@ -160,12 +171,14 @@ not implement production S2 or alter the remaining desktop acceptance scope.
 
 **UI-only checkpoint (2026-10-22):** Option A is implemented, locally verified and approved for delivery to `main`. [Retrieve preview tracker](retrieve-ui-preview.md) records approved Option A, initial C-GET, synthetic-only boundaries and passing local dry/native gates (100 Flutter / 22 core tests). Dark/light native screenshots are recorded there. Production checkboxes and manual desktop acceptance remain pending.
 
-The subsequent [Retrieve refactoring](refactor/refactor-retrieve.md) preserves the
-preview's behavior, public imports and shell ownership while separating models,
-session control, review/evidence panels and receipt inspection. Its verification
-is recorded separately from production retrieval and manual desktop acceptance.
+Retrieve refactoring landed in `43e6859`, preserving preview behavior, public
+imports and shell ownership while separating models, session control,
+review/evidence panels and receipt inspection. The
+[archived Retrieve refactoring record](../archive/refactor/refactor-retrieve.md)
+preserves its verification separately from production retrieval and manual
+desktop acceptance.
 
-**Design proposal (2026-10-22):** [Retrieve options](../design/07-retrieve-workbench-options.md) continue from the Query preview landed at `9d1fb4b`. A full-width nested review/run workspace (A, recommended) and side sheet (B) share the same target, method, destination and evidence contracts. Option A and initial C-GET are approved; implementation is tracked separately above. The [interactive HTML](../design/assets/retrieve-options.html) uses synthetic snapshots only; those original browser checks preceded the Flutter preview and did not change listener, file-save or protocol implementation. Browser checks covered method/folder gating, edited IMAGE identifiers, frozen sample evidence, cancellation intent, active-sample navigation, partial saves, and missing-callback presentation. Both layouts fit a measured 760 × 600 CSS viewport without workspace horizontal overflow; B hides the source pane at that size. Light/dark views were inspected and comparison screenshots saved. JavaScript syntax and diff whitespace checks passed. These checks do not complete S3–S5 or manual desktop acceptance.
+**Design proposal (2026-10-22):** [Retrieve options](../design/07-retrieve-workbench-options.md) continue from the Query preview landed at `9d1fb4b`. A full-width nested review/run workspace (A, recommended) and side sheet (B) share the same target, method, destination and evidence contracts. Option A and initial C-GET are approved; implementation is tracked separately above. The [interactive HTML](../design/assets/mockup/retrieve-options.html) uses synthetic snapshots only; those original browser checks preceded the Flutter preview and did not change listener, file-save or protocol implementation. Browser checks covered method/folder gating, edited IMAGE identifiers, frozen sample evidence, cancellation intent, active-sample navigation, partial saves, and missing-callback presentation. Both layouts fit a measured 760 × 600 CSS viewport without workspace horizontal overflow; B hides the source pane at that size. Light/dark views were inspected and comparison screenshots saved. JavaScript syntax and diff whitespace checks passed. These checks do not complete S3–S5 or manual desktop acceptance.
 
 **Demo:** query, select one study/series/instance, review the exact target and receive folder, retrieve through C-GET with the standalone listener stopped, and see linked delivery/save counts.
 
@@ -232,7 +245,7 @@ This lane buys down library gaps alongside the first affected slice. It is not a
 | Item | Required public contract / evidence | Needed for | State |
 |---|---|---|---|
 | U1 | Structured association lifecycle, available transport milestones, negotiation and numeric reject/abort data; source/provenance without parsing formatted trace | S1 | Published in `v0.1.0-dev.2` at `53ee5ec`; consumed and verified by app commit `40b1563` |
-| U2 | Find final status, cancellation/abort distinction and retrieve counter presence; subscription cancellation completion is not cancellation proof | S2, S4 | Gap recorded in PRD/blueprint; implementation pending |
+| U2 | Find final status, cancellation/abort distinction and retrieve counter presence; subscription cancellation completion is not cancellation proof | S2, S4 | Find contract implemented locally for S2A; upstream delivery and retrieve evidence pending |
 | U3 | Receipt/association context, originator fields and sink acknowledgement behavior; concurrent save failure propagation | S3, S5 | Contract verification and any upstream delta pending |
 | U4 | Public grayscale rendering and explicit unsupported-charset/codec behavior; packaged Flutter display on both platforms; current grayscale decoding is pure Dart | S2 headers, S6 pixels | App/platform verification pending |
 
@@ -252,7 +265,7 @@ When work lands upstream, record issue/PR, release or commit pin, contract tests
 |---|---|---|---|---|---|
 | S0 | `fdaf6d4`; refactor `15dba15`, native harness `b8dee94` | 52 local dry tests pass; hosted macOS 15 and Ubuntu 24.04 dry jobs pass at `da80283` | No DIMSE work in scope | macOS automated native flow + release smoke / Ubuntu 24.04 Xvfb flow; GNOME acceptance pending | In progress — [evidence and remaining checks](../tests/s0-configuration.md) |
 | S1 | `40b1563`; upstream `53ee5ec` | Clean-clone macOS full dry and hosted macOS 15/Ubuntu 24.04 CI passed; 52 Flutter + 22 core tests, Drift parity and release builds | 10 cases from committed macOS clone; identical-source Ubuntu snapshot also passed | macOS committed-clone native configuration/Echo + release probe / Ubuntu emulated Xvfb snapshot equivalents + release probe | Implementation and automated delivery verified; manual desktop acceptance pending — [evidence](s1-echo.md) |
-| S2 | — | Not run | Not run | Not run / Not run | Pending |
+| S2A | PR candidate; upstream pinned at `32f0f90` | Local dry + Ubuntu 24.04 automated subset | 24 owned-loopback cases; scoped external catalog check | macOS configuration/Echo/Query; Linux desktop pending | Review checkpoint; [verification receipts](s2-query.md), S2B and delivery pending |
 | S3 | — | Not run | Not run | Not run / Not run | Pending |
 | S4 | — | Not run | Not run | Not run / Not run | Pending |
 | S5 | — | Not run | Not run | Not run / Not run | Pending |

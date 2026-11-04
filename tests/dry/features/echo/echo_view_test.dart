@@ -107,7 +107,7 @@ void main() {
         expect(
           tester
               .widget<FilledButton>(
-                find.byKey(const ValueKey('run-query-preview')),
+                find.widgetWithText(FilledButton, 'Run query'),
               )
               .onPressed,
           isNull,
@@ -118,10 +118,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.text('Back'));
         await tester.pumpAndSettle();
-        expect(
-          find.text('UI preview · synthetic data · no network'),
-          findsOneWidget,
-        );
+        expect(find.text('Query · live C-FIND'), findsOneWidget);
 
         await tester.tap(find.widgetWithText(ListTile, 'Settings'));
         await tester.pumpAndSettle();
@@ -162,35 +159,17 @@ void main() {
         await tester.tap(find.byKey(const ValueKey('open-node-node')));
         await tester.pumpAndSettle();
         // Query remains the last operation selected for this node.
+        expect(find.text('Query · live C-FIND'), findsOneWidget);
         expect(
-          find.text('UI preview · synthetic data · no network'),
+          find.textContaining('No query has run at this level'),
           findsOneWidget,
         );
-        await tester.ensureVisible(
-          find.byKey(const ValueKey('run-query-preview')),
-        );
-        await tester.tap(find.byKey(const ValueKey('run-query-preview')));
+        await tester.tap(find.text('View run'));
         await tester.pumpAndSettle();
-        expect(find.textContaining('3 retained rows'), findsOneWidget);
-        Future<void> tapVisible(Finder finder) async {
-          await tester.ensureVisible(finder);
-          await tester.pumpAndSettle();
-          await tester.tap(finder);
-          await tester.pumpAndSettle();
-        }
-
-        await tapVisible(find.text('Select').first);
-        await tapVisible(find.text('Review retrieve'));
-        await tapVisible(find.text('Choose sample folder'));
-        await tapVisible(find.byKey(const ValueKey('show-retrieve-sample')));
-        expect(
-          find.textContaining('Synthetic final status 0x0000'),
-          findsOneWidget,
-        );
-        await tapVisible(find.text('View run'));
         expect(find.textContaining('Echo status: 0x0000'), findsOneWidget);
-        await tapVisible(find.text('Back'));
-        expect(find.text('Back to results'), findsOneWidget);
+        await tester.tap(find.text('Back'));
+        await tester.pumpAndSettle();
+        expect(find.text('Query · live C-FIND'), findsOneWidget);
 
         expect(gateway.calls, hasLength(1));
         expect(runs.summaries.length, writes);

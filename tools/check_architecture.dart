@@ -92,7 +92,9 @@ List<String> checkArchitecture(Directory root) {
     if (from.startsWith('core')) {
       return to == from ||
           to == 'core:foundation' ||
-          from == 'core:operations' && to == 'core:configuration' ||
+          (from == 'core:operations' &&
+                  {'core:configuration', 'core:query'}.contains(to) ||
+              from == 'core:query' && to == 'core:configuration') ||
           from == 'core' && to.startsWith('core:');
     }
     if (to == 'core') return true;

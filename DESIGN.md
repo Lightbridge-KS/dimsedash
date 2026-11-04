@@ -44,8 +44,8 @@ components:
 ## Overview
 
 The approved reference is the compact blue diagnostic workbench in
-`docs/design/assets/workbench-v2.html`, with its earlier Settings panel now superseded by the global-only Settings design in `docs/design/03-surface-architecture.md`. Node-library navigation follows approved Option A in
-`docs/design/assets/navigation-options.html`; the earlier node-library comparison
+`docs/design/assets/mockup/workbench-v2.html`, with its earlier Settings panel now superseded by the global-only Settings design in `docs/design/03-surface-architecture.md`. Node-library navigation follows approved Option A in
+`docs/design/assets/mockup/navigation-options.html`; the earlier node-library comparison
 remains available for design history.
 The palette comes from the supplied Material Theme Builder blue theme. This
 extraction preserves that direction; it is not a new visual proposal.
@@ -102,20 +102,27 @@ from the frozen executed target. Unimplemented workflows show an honest explanat
 - Do not fabricate run results, connectivity status or a listening receiver.
 - Do not imply masking removes identifying data from stored DICOM objects.
 
-## Query preview
+## Query — S2A
 
 Approved Option A places the full-width query composer above results inside the
 node workbench, with Echo / Query switching under the shared node header. Filters,
 Advanced Identifier and Resolved Identifier share a draft; Collapse is explicit.
 At narrow widths fields stack and tables scroll horizontally within their panel.
 
-The current Query implementation is labeled **UI preview · synthetic data · no
-network**. Fixed fixtures are distinct from live Echo evidence. Preview controls
-live in a disclosure; arbitrary tag/sequence editing is an illustrative sketch.
-Remote queries and retrieval remain pending. See
-[the Query preview tracker](docs/progress/query-ui-preview.md).
+Normal Query is **live C-FIND**. Use explicit Run query / Cancel query controls,
+received/retained counts and local pages of 50 rows. Never insert wildcards, select
+a response or collapse criteria automatically. Body part is optional and blank;
+at STUDY it is a pending next-series filter, never an outbound study key.
+Resolved and executed Identifiers are separate, masked views. Empty, missing and
+decode-limited metadata must look distinct. Numeric peer status, cancellation,
+completeness and cleanup are independent evidence. Arbitrary-tag/sequence authoring
+remains visibly deferred to S2B. See [S2 tracker](docs/progress/s2-query.md).
 
-## Retrieve preview
+Real selections open read-only target review. Show scope and the full required UID
+hierarchy, with **Retrieval execution is not yet available**. Keep sample receipts
+out of this path. The earlier prototypes below remain comparison/test material.
+
+## Historical Retrieve preview
 
 Approved Option A uses a full-width nested review/evidence workspace reached
 from one selected Query target. Back to results preserves the source workspace.

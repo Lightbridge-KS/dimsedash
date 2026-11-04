@@ -30,9 +30,9 @@ class _DimseDashAppState extends ConsumerState<DimseDashApp> {
           final quit = await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text('Echo is running'),
+              title: const Text('An operation is running'),
               content: const Text(
-                'Stop Echo and close the application? Unfinished history is marked interrupted on restart.',
+                'Cancel the active operation and close the application? Unfinished history is marked interrupted on restart.',
               ),
               actions: [
                 TextButton(

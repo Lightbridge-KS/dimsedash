@@ -1,4 +1,5 @@
-import 'package:dimsedash/app/shell.dart';
+import 'preview_shell.dart';
+
 import 'package:dimsedash/bindings/configuration.dart';
 import 'package:dimsedash/features/query/query_preview.dart';
 import 'package:dimsedash/features/query/query_view.dart';
@@ -60,7 +61,7 @@ Future<(NodeConfigStore, ProviderContainer)> launch(
               .copyWith(textScaler: TextScaler.linear(scale)),
           child: child!,
         ),
-        home: const WorkbenchShell(),
+        home: const PreviewWorkbenchShell(),
       ),
     ),
   );

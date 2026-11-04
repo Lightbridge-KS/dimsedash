@@ -18,6 +18,8 @@ void main() {
     'native Echo survives navigation and settings edits, then retries',
     (tester) async {
       tester.testTextInput.register();
+      // Establish the native frame before asynchronous database/fixture setup.
+      await tester.pumpWidget(const SizedBox.shrink());
       final dir = await Directory.systemTemp.createTemp(
         'dimsedash-native-echo-',
       );
@@ -30,8 +32,8 @@ void main() {
               timeouts: EchoTimeouts(
                 connect: 2,
                 association: 2,
-                dimse: 6,
-                idle: 6,
+                dimse: 30,
+                idle: 30,
               ),
             ),
             node: PacsNode(
@@ -79,14 +81,6 @@ void main() {
           await tester.pumpAndSettle();
         }
 
-        // Materialize Query fixtures before the real operation occupies admission.
-        await tapVisible(find.text('Query'));
-        await tapVisible(find.byKey(const ValueKey('run-query-preview')));
-        await tapVisible(find.text('Select').first);
-        await tapVisible(find.text('Review retrieve'));
-        await tapVisible(find.text('Choose sample folder'));
-        await tapVisible(find.text('Back to results'));
-        await tapVisible(find.text('Echo'));
         await tester.tap(find.text('Run Echo'));
         await tester.pumpAndSettle();
         expect(runtime.runner!.active, isTrue);
@@ -96,28 +90,19 @@ void main() {
         expect(
           tester
               .widget<FilledButton>(
-                find.byKey(const ValueKey('run-query-preview')),
+                find.widgetWithText(FilledButton, 'Run query'),
               )
               .onPressed,
           isNull,
         );
         expect(runtime.runner!.state.stopRequested, isFalse);
-        await tapVisible(find.text('Review retrieve'));
-        expect(
-          tester
-              .widget<FilledButton>(
-                find.byKey(const ValueKey('show-retrieve-sample')),
-              )
-              .onPressed,
-          isNull,
-        );
         final before =
             (await runtime.configStore.load() as Success<AppConfiguration>)
                 .value
                 .revision;
         await tapVisible(find.text('View run'));
         await tapVisible(find.text('Back'));
-        expect(find.text('Back to results'), findsOneWidget);
+        expect(find.text('Query · live C-FIND'), findsOneWidget);
         expect(
           (await runtime.configStore.load() as Success<AppConfiguration>)
               .value
@@ -125,7 +110,6 @@ void main() {
           before,
         );
         expect(runtime.runner!.state.stopRequested, isFalse);
-        await tapVisible(find.text('Back to results'));
 
         await tapVisible(find.text('All nodes'));
         await tester.tap(find.byKey(ValueKey('open-node-${added.node!.id}')));
@@ -178,14 +162,14 @@ void main() {
               .dimse,
           1,
         );
-        expect(runtime.runner!.state.request!.client.timeouts.dimse, 6);
+        expect(runtime.runner!.state.request!.client.timeouts.dimse, 30);
         await tester.tap(find.text('View run'));
         await tester.pumpAndSettle();
         await tester.runAsync(() async {
           if (runtime.runner!.active) {
             await runtime.runner!.changes
                 .firstWhere((s) => !s.active)
-                .timeout(const Duration(seconds: 8));
+                .timeout(const Duration(seconds: 35));
           }
         });
         await tester.pumpAndSettle();

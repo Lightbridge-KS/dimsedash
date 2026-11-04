@@ -460,3 +460,26 @@ Typed observer callbacks contain no datasets, raw payloads or arbitrary peer tex
 observer exceptions cannot interrupt protocol handling. Full trace strings are
 never parsed to reconstruct facts. Implementation details and verification status
 are tracked in [S1](../progress/s1-echo.md).
+
+
+## S2A execution contract
+
+S2A extends the runtime-owned admission gate to one outbound Echo **or** Find,
+including resource cleanup. `FindGateway` is an additive capability beside the
+existing Echo seam. An immutable resolved request freezes configuration,
+Identifier, hierarchy and limits before the durable start record and dispatch.
+The runtime consumes upstream matches independently of widget subscriptions and
+retains bounded result contexts; presentation navigation cannot pause networking.
+
+Find cancellation before dispatch stops establishment. During Find it requests
+C-CANCEL and drains to independently retained terminal evidence within the DIMSE
+timeout, then tears down if necessary. Cancellation intent, peer final status,
+result completeness and cleanup failure are separate facts. Successful final
+status survives a failed release as a diagnostic warning.
+
+The public Git commit pin includes the additive Find handle, response
+reassembly limit and charset support reporting. No sibling checkout is required.
+Upstream release tags and desktop acceptance remain separate gates. See the
+[S2A tracker](../progress/s2-query.md) and [verification runbook](../tests/s2-query.md).
+The complete structured Identifier editor remains S2B; retrieval review performs
+no Get/Move, receiving or file operations.

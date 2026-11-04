@@ -35,10 +35,10 @@ group. It refuses occupied ports, waits for readiness, and removes its own servi
 and ephemeral volumes in `finally`. It never connects to an existing PACS.
 Orthanc **26.9.1** publishes DICOM only on loopback; there is no published REST
 port or persistent volume. Controlled peers pin **pynetdicom 3.0.4** and
-**pydicom 3.0.2**. These peers exchange Verification commands only; no DICOM image
-fixtures, sibling repository or clinical service is needed.
+**pydicom 3.0.2**. The shared harness now also seeds bounded synthetic Query fixtures and Find peers
+for S2A. No sibling repository or clinical service is needed.
 
-Default Orthanc port: 4242. Helper ports: 4250–4256. Override occupied ports:
+Default Orthanc port: 4242. Helper ports: 4250–4264. Override occupied ports:
 
 ```sh
 DIMSEDASH_ORTHANC_PORT=18424 DIMSEDASH_PEER_PORT=18450 just live

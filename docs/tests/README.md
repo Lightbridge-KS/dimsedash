@@ -107,3 +107,5 @@ portable entry point. CI invokes `just dry` and does not launch a desktop test.
 
 S1 adds [Echo verification](s1-echo.md): `just live`, `just native-echo` and
 `just native-echo-release` use independently owned loopback fixtures.
+
+Real Study Root C-FIND: [S2A Query verification](s2-query.md).

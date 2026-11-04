@@ -6,6 +6,8 @@ services:
     environment:
       ORTHANC__DICOM_AET: PACS_AET
       ORTHANC__DICOM_ALWAYS_ALLOW_ECHO: 'true'
+      ORTHANC__DICOM_ALWAYS_ALLOW_FIND: 'true'
+      ORTHANC__DICOM_ALWAYS_ALLOW_STORE: 'true'
       ORTHANC__AUTHENTICATION_ENABLED: 'false'
       ORTHANC__REMOTE_ACCESS_ALLOWED: 'false'
     tmpfs:

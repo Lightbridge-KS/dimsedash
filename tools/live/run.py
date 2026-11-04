@@ -12,7 +12,7 @@ import uuid
 root = pathlib.Path(__file__).resolve().parents[2]
 base = int(os.environ.get("DIMSEDASH_PEER_PORT", "4250"))
 orthanc = int(os.environ.get("DIMSEDASH_ORTHANC_PORT", "4242"))
-ports = [orthanc, *range(base, base + 7)]
+ports = [orthanc, *range(base, base + 15)]
 if len(set(ports)) != len(ports) or any(not 1024 <= p <= 65535 for p in ports):
     sys.exit("Fixture ports must be distinct and between 1024 and 65535.")
 # Never mistake an unrelated process for a fixture or stop a pre-existing service.
@@ -47,6 +47,8 @@ try:
             str(root / "tools/live/peers.py"),
             "--base-port",
             str(base),
+            "--echo-delay",
+            "20" if "--native" in sys.argv else "3",
         ],
         cwd=root,
         start_new_session=True,
@@ -63,6 +65,10 @@ try:
                 if time.monotonic() >= deadline:
                     raise TimeoutError(f"Fixture port {port} was not ready.")
                 time.sleep(0.1)
+    subprocess.run([
+        "uv", "run", "--with", "pydicom==3.0.2", "--with", "pynetdicom==3.0.4",
+        "python", str(root / "tools/live/seed_query.py"), "--port", str(orthanc),
+    ], check=True, cwd=root, timeout=30)
     flutter = shlex.split(os.environ.get("FLUTTER_COMMAND", "fvm flutter"))
     command = [
         *flutter,
@@ -72,12 +78,12 @@ try:
         f"--dart-define=PEER_PORT={base}",
         f"--dart-define=ORTHANC_PORT={orthanc}",
     ]
-    if "--native" in sys.argv:
+    if "--native" in sys.argv or "--query" in sys.argv:
         device = "macos" if sys.platform == "darwin" else "linux"
         command = [
             *flutter,
             "test",
-            "integration_test/echo_flow_test.dart",
+            "integration_test/query_flow_test.dart" if "--query" in sys.argv else "integration_test/echo_flow_test.dart",
             "-d",
             device,
             "--no-pub",
@@ -115,7 +121,7 @@ try:
         if "DIMSEDASH_RELEASE_ECHO_PASS" not in result.stdout:
             raise RuntimeError("Release probe did not confirm Echo success.")
     else:
-        subprocess.run(command, check=True, cwd=root)
+        subprocess.run(command, check=True, cwd=root, timeout=600)
 
 finally:
     if peer is not None and peer.poll() is None:

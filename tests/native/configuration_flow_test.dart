@@ -153,36 +153,13 @@ void main() {
       expect(find.text('Mask values'), findsOneWidget);
       await tester.tap(find.text('Query'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(
-        find.byKey(const ValueKey('run-query-preview')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('run-query-preview')));
-      await tester.pumpAndSettle();
-      expect(find.textContaining('3 retained rows'), findsOneWidget);
-      Future<void> tapVisible(Finder target) async {
-        await tester.ensureVisible(target);
-        await tester.pumpAndSettle();
-        await tester.tap(target);
-        await tester.pumpAndSettle();
-      }
-
-      await tapVisible(find.text('Select').first);
-      await tapVisible(find.text('Review retrieve'));
+      expect(find.text('Query · live C-FIND'), findsOneWidget);
       expect(
-        find.text('UI preview · synthetic data · no network or files'),
-        findsOneWidget,
-      );
-      await tapVisible(find.text('Choose sample folder'));
-      await tapVisible(find.byKey(const ValueKey('show-retrieve-sample')));
-      expect(
-        find.textContaining('Synthetic final status 0x0000'),
+        find.textContaining('No query has run at this level'),
         findsOneWidget,
       );
       expect(runtime!.runner!.state.summary, isNull);
-      await tapVisible(find.text('Inspect headers 1'));
-      expect(find.textContaining('SAMPLE^ONLY'), findsOneWidget);
-      await tapVisible(find.text('Close'));
+      // Native Query networking and hierarchy have their own loopback gate.
 
       expect(
         (await runtime!.configStore.load() as Success<AppConfiguration>)
@@ -215,7 +192,10 @@ void main() {
       expect(find.text('All nodes'), findsOneWidget);
       await tester.tap(find.text('Query'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('No query results yet'), findsOneWidget);
+      expect(
+        find.textContaining('No query has run at this level'),
+        findsOneWidget,
+      );
       expect(find.textContaining('retained rows'), findsNothing);
       expect(find.text('View sample'), findsNothing);
       expect(find.textContaining('Synthetic final status'), findsNothing);

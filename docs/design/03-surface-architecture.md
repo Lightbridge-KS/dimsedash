@@ -12,9 +12,9 @@ read_when:
 >
 > See also: [System Architecture](01-system-architecture.md) · [Data Architecture](02-data-architecture.md) · [Codebase Blueprint](../structure/01-codebase-blueprint.md)
 
-**Status: approved surface design; S0 configuration and S1 Echo implemented; Query UI preview is synthetic and real Query/Retrieve remain planned.** The advanced Identifier editor is confirmed for the first preview; the local dataset rule engine is deferred. Existing package, Riverpod, concurrency and storage decisions remain settled. The three surface choices are approved (2026-10-19): single study/series/instance selection without batching, structured nested editing, and masked-on-launch values with separate thumbnail reveal. No CLI, public HTTP API, background daemon or automation interface is introduced.
+**Status: approved surface design; S0 configuration and S1 Echo implemented; S2A real Query is implemented locally; S2B authoring and retrieval execution remain pending.** The advanced Identifier editor is confirmed for the first preview; the local dataset rule engine is deferred. Existing package, Riverpod, concurrency and storage decisions remain settled. The three surface choices are approved (2026-10-19): single study/series/instance selection without batching, structured nested editing, and masked-on-launch values with separate thumbnail reveal. No CLI, public HTTP API, background daemon or automation interface is introduced.
 
-The [refined interactive mockup](assets/workbench-v2.html) demonstrates the primary workflow with synthetic data and simulated outcomes. It is a proposal refining the [approved original](../req/assets/approved-workbench.html), not a replacement approval or interoperability result. The original remains unchanged. Captured [query](assets/workbench-v2-query.png), [dark appearance](assets/workbench-v2-dark.png) and [inspection](assets/workbench-v2-inspection.png) views show the composer, masked headers and synthetic thumbnail. The added [single-instance review](assets/workbench-v2-instance.png) shows IMAGE scope with the complete study/series/SOP instance UID hierarchy. Mockup coverage and limitations are listed in §8.
+The [refined interactive mockup](assets/mockup/workbench-v2.html) demonstrates the primary workflow with synthetic data and simulated outcomes. It is a proposal refining the [approved original](../req/assets/approved-workbench.html), not a replacement approval or interoperability result. The original remains unchanged. Captured [query](assets/mockup/workbench-v2-query.png), [dark appearance](assets/mockup/workbench-v2-dark.png) and [inspection](assets/mockup/workbench-v2-inspection.png) views show the composer, masked headers and synthetic thumbnail. The added [single-instance review](assets/mockup/workbench-v2-instance.png) shows IMAGE scope with the complete study/series/SOP instance UID hierarchy. Mockup coverage and limitations are listed in §8.
 
 ## Cheat Sheet
 
@@ -84,14 +84,14 @@ Pane dividers are resizable and keyboard operable. A collapsed pane has a visibl
 ### Settings: local DICOM settings
 
 **Approved simplification (2026-10-20):** remote-node fields belong exclusively to
-Nodes → Add/Edit. Settings edits global client identity, listener port, Echo
+Nodes → Add/Edit. Settings edits global client identity, listener port, DICOM
 timeouts and appearance; it does not edit, create or select a remote node.
 
 | Group | Fields | Behavior |
 |---|---|---|
 | Client node | Calling AE Title | Default `DIMSE_DASH`; also the local receiver and C-MOVE destination identity |
 | Client node | Client listening port | Local C-MOVE callback listener port; C-GET needs no separate listener |
-| Global Echo timeouts | Connect, association, DIMSE, idle | Whole seconds, 1–600; future runs use saved values |
+| Global DICOM timeouts | Connect, association, DIMSE, idle | Whole seconds, 1–600; future runs use saved values |
 | Appearance | System, light, dark | Global display preference |
 
 **Save settings** validates and commits only client settings using an optimistic
@@ -106,7 +106,7 @@ Saving local settings does not update that registration. Future retrieve/receive
 slices must enforce their idle/stopped configuration restrictions; running Echo
 keeps its frozen configuration while later runs use the saved values.
 
-The earlier [Settings screenshot](assets/workbench-v2-settings.png) and Settings
+The earlier [Settings screenshot](assets/mockup/workbench-v2-settings.png) and Settings
 panel in `workbench-v2.html` are historical; their combined remote/local editor is
 superseded by this design.
 
@@ -121,18 +121,45 @@ First launch opens Nodes with an empty library and **Add node**, with a short ex
 
 Restart restores saved configuration, retained history and the independent file inventory. Query results, sensitive draft criteria and thumbnails do not return. Listener stays stopped. Interrupted runs and pending saves show recovery outcomes; the app never automatically reissues a request. A database/migration failure presents a recovery error with a useful local diagnosis, not an automatic reset button that discards records.
 
-## Query implementation checkpoint — 2026-10-22
+## Query implementation checkpoint — S2A (2026-11-04)
 
-[Option A](06-query-workbench-options.md) is approved for the full-width Query
-composer. Flutter now exposes Echo / Query within the nested node workbench.
-Query is a labeled synthetic UI preview: common keys, fixed response scenarios,
-explicit hierarchy navigation, metadata inspection and read-only retrieval handoff.
-It owns no network operations or persistent history. A single shell-owned preview
-session survives navigation for the same node and is cleared on node change or
-selection loss. Real Echo remains independent and its active/latest strip is shown
-when Query is displayed. These preview mechanics do not complete the production
-Find, full Identifier or Retrieve contracts below. Verification is recorded in the
-[preview tracker](../progress/query-ui-preview.md).
+[Option A](06-query-workbench-options.md) remains the full-width composer inside
+the nested node workbench. Normal Query now executes real Study Root C-FIND at
+STUDY, SERIES and IMAGE. The earlier [synthetic preview](../progress/query-ui-preview.md)
+and Retrieve prototype remain test/prototype material, not an alternate live mode.
+
+Friendly/common advanced/resolved views share one canonical Identifier. All
+matching fields are optional, dates are inclusive and literal values are preserved.
+**Body part (optional)** starts blank, is pending/excluded at STUDY, and becomes
+an optional SERIES matching or empty return key. Missing body part never causes
+local row rejection. Broad queries show that client retention cannot bound PACS work.
+Full arbitrary tags/private creators/sequence authoring remain S2B.
+
+Run query and Cancel query are explicit. One runtime admission covers Echo and
+Find through cleanup. Rows stream without selection or automatic collapse. Defaults
+are 1,000 retained rows (session-editable 1–10,000), 32 MiB accounted retained
+metadata across contexts and a 1 MiB incoming Identifier cap. Fifty rows are shown
+per local page; this is not server pagination or a total-process memory guarantee.
+Limit cancellation, peer final status, cancellation intent/confirmation, failure
+and cleanup are separate facts. Optional-key warnings remain visible.
+
+Inspect opens searchable nested metadata with missing, empty and decode-limited
+states. Parent metadata is labeled inherited. Select and Open series/instances
+are separate actions; entering a child never executes it. Missing/invalid/conflicting
+UIDs block dependent actions without hiding the response. A changed node revision
+or calling AE invalidates selection/continuation; timeout edits affect the next run.
+Executed identifiers and outcomes remain frozen and masked until revealed.
+
+The shell keeps same-node drafts, hierarchy, editor/collapse/scroll state and owns
+navigation only. A different selected node clears ordinary Query state; active
+networking and current/latest evidence remain runtime-owned. The generalized
+running/latest strip opens the exact Echo or Find run without selecting its node.
+An obsolete route never substitutes a newer run. Real selections enter a read-only
+retrieve target review with **Retrieval execution is not yet available**; no sample
+receipt, method execution, receiver startup or filesystem action is reachable.
+
+Verification and delivery limits: [S2 tracker](../progress/s2-query.md) and
+[Query runbook](../tests/s2-query.md).
 
 ## 4. Key journeys
 
@@ -189,7 +216,7 @@ Resolved Identifier displays numeric tags, dictionary names, VRs, values and SQ 
 
 ### 4.3 Retrieve review → receive → inspect
 
-**Implemented presentation checkpoint — synthetic only:** approved Option A
+**Historical presentation checkpoint — synthetic only (not routed from real Query):** approved Option A
 opens a full-width nested Retrieve workspace from Query's selected row. Back to
 results restores Query state and focus; no Retrieve sidebar item or permanent
 operation tab is added. Fresh drafts choose C-GET, require explicit sample-folder
