@@ -67,6 +67,13 @@ Future<void> pumpSettings(
 }
 
 Future<void> tap(WidgetTester t, String text) async {
+  if (find.text(text).evaluate().isEmpty) {
+    await t.scrollUntilVisible(
+      find.text(text),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+  }
   await t.ensureVisible(find.text(text).last);
   await t.pumpAndSettle();
   await t.tap(find.text(text).last);
@@ -156,10 +163,10 @@ void main() {
         );
         expect(
           t
-              .widget<DropdownButtonFormField<Appearance>>(
-                find.byType(DropdownButtonFormField<Appearance>),
+              .widget<SegmentedButton<Appearance>>(
+                find.byType(SegmentedButton<Appearance>),
               )
-              .onChanged,
+              .onSelectionChanged,
           isNull,
         );
         for (final field in t.widgetList<TextField>(find.byType(TextField))) {
@@ -184,6 +191,27 @@ void main() {
       },
     );
   }
+  testWidgets(
+    'narrow theme segments stack and discard restores the saved choice',
+    (t) async {
+      final store = MemoryConfigStore();
+      await pumpSettings(t, store, size: const Size(480, 600), scale: 1.5);
+      final segments = find.byType(SegmentedButton<Appearance>);
+      expect(
+        t.widget<SegmentedButton<Appearance>>(segments).direction,
+        Axis.vertical,
+      );
+      await tap(t, 'Light');
+      expect(store.saves, 0);
+      await tap(t, 'Discard edits');
+      await t.drag(find.byType(ListView), const Offset(0, 3000));
+      await t.pumpAndSettle();
+      expect(t.widget<SegmentedButton<Appearance>>(segments).selected, {
+        Appearance.system,
+      });
+      expect(t.takeException(), isNull);
+    },
+  );
   for (final brightness in Brightness.values) {
     testWidgets(
       'appearance saves and layout fits scaled minimum in $brightness',
@@ -196,12 +224,17 @@ void main() {
           scale: 1.5,
           brightness: brightness,
         );
-        final appearance = find.byType(DropdownButtonFormField<Appearance>);
+        final appearance = find.byType(SegmentedButton<Appearance>);
         await t.ensureVisible(appearance);
         await t.pumpAndSettle();
-        await t.tap(appearance);
-        await t.pumpAndSettle();
-        await tap(t, 'dark');
+        expect(
+          t.getTopLeft(find.text('General')).dy,
+          lessThan(t.getTopLeft(find.text('Local DICOM settings')).dy),
+        );
+        await tap(t, 'Dark');
+        expect(store.saves, 0);
+        expect(store.value.client.appearance, Appearance.system);
+        expect(find.text('Always use dark appearance.'), findsOneWidget);
         await tap(t, 'Save settings');
         expect(store.value.client.appearance, Appearance.dark);
         expect(

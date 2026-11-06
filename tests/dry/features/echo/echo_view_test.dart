@@ -118,7 +118,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.text('Back'));
         await tester.pumpAndSettle();
-        expect(find.text('Query · live C-FIND'), findsOneWidget);
+        expect(find.text('Query criteria'), findsOneWidget);
 
         await tester.tap(find.widgetWithText(ListTile, 'Settings'));
         await tester.pumpAndSettle();
@@ -159,7 +159,7 @@ void main() {
         await tester.tap(find.byKey(const ValueKey('open-node-node')));
         await tester.pumpAndSettle();
         // Query remains the last operation selected for this node.
-        expect(find.text('Query · live C-FIND'), findsOneWidget);
+        expect(find.text('Query criteria'), findsOneWidget);
         expect(
           find.textContaining('No query has run at this level'),
           findsOneWidget,
@@ -169,7 +169,7 @@ void main() {
         expect(find.textContaining('Echo status: 0x0000'), findsOneWidget);
         await tester.tap(find.text('Back'));
         await tester.pumpAndSettle();
-        expect(find.text('Query · live C-FIND'), findsOneWidget);
+        expect(find.text('Query criteria'), findsOneWidget);
 
         expect(gateway.calls, hasLength(1));
         expect(runs.summaries.length, writes);

@@ -61,6 +61,25 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text('General', style: theme.textTheme.titleLarge),
+                const SizedBox(height: 20),
+                _ThemeSetting(
+                  value: _appearance,
+                  onChanged: _busy
+                      ? null
+                      : (value) => setState(() => _appearance = value),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text('Local DICOM settings', style: theme.textTheme.titleLarge),
                 const SizedBox(height: 20),
                 _ConnectionSection(
@@ -102,42 +121,33 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  _EnumSettingField<Appearance>(
-                    label: 'Appearance',
-                    value: _appearance,
-                    values: Appearance.values,
-                    onChanged: _busy
-                        ? null
-                        : (value) => setState(() => _appearance = value!),
-                  ),
                 ],
-                const SizedBox(height: 20),
-                if (_message != null)
-                  Semantics(
-                    liveRegion: true,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Text(_message!),
-                    ),
-                  ),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    FilledButton(
-                      onPressed: _busy ? null : _save,
-                      child: Text(_saving ? 'Saving…' : 'Save settings'),
-                    ),
-                    OutlinedButton(
-                      onPressed: _busy ? null : _discard,
-                      child: Text(_reloading ? 'Reloading…' : 'Discard edits'),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
+        ),
+        const SizedBox(height: 16),
+        if (_message != null)
+          Semantics(
+            liveRegion: true,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Text(_message!),
+            ),
+          ),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            FilledButton(
+              onPressed: _busy ? null : _save,
+              child: Text(_saving ? 'Saving…' : 'Save settings'),
+            ),
+            OutlinedButton(
+              onPressed: _busy ? null : _discard,
+              child: Text(_reloading ? 'Reloading…' : 'Discard edits'),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         const Text(
@@ -240,34 +250,55 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   );
 }
 
-class _EnumSettingField<T extends Enum> extends StatelessWidget {
-  const _EnumSettingField({
-    required this.label,
-    required this.value,
-    required this.values,
-    required this.onChanged,
-  });
+class _ThemeSetting extends StatelessWidget {
+  const _ThemeSetting({required this.value, required this.onChanged});
 
-  final String label;
-  final T value;
-  final List<T> values;
-  final ValueChanged<T?>? onChanged;
+  final Appearance value;
+  final ValueChanged<Appearance>? onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 300,
-      child: DropdownButtonFormField<T>(
-        key: ValueKey(value),
-        initialValue: value,
-        decoration: InputDecoration(labelText: label),
-        items: values
-            .map((e) => DropdownMenuItem<T>(value: e, child: Text(e.name)))
-            .toList(),
-        onChanged: onChanged,
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text('Theme', style: Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height: 12),
+      LayoutBuilder(
+        builder: (context, constraints) => SegmentedButton<Appearance>(
+          direction:
+              constraints.maxWidth < MediaQuery.textScalerOf(context).scale(360)
+              ? Axis.vertical
+              : Axis.horizontal,
+          segments: const [
+            ButtonSegment(
+              value: Appearance.system,
+              icon: Icon(Icons.brightness_auto_outlined),
+              label: Text('System'),
+            ),
+            ButtonSegment(
+              value: Appearance.light,
+              icon: Icon(Icons.light_mode_outlined),
+              label: Text('Light'),
+            ),
+            ButtonSegment(
+              value: Appearance.dark,
+              icon: Icon(Icons.dark_mode_outlined),
+              label: Text('Dark'),
+            ),
+          ],
+          selected: {value},
+          onSelectionChanged: onChanged == null
+              ? null
+              : (selection) => onChanged!(selection.single),
+        ),
       ),
-    );
-  }
+      const SizedBox(height: 8),
+      Text(switch (value) {
+        Appearance.system => 'Follow the system’s appearance.',
+        Appearance.light => 'Always use light appearance.',
+        Appearance.dark => 'Always use dark appearance.',
+      }, style: Theme.of(context).textTheme.bodySmall),
+    ],
+  );
 }
 
 class _ConnectionSection extends StatelessWidget {

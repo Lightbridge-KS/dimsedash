@@ -83,12 +83,10 @@ void main() {
       expect(find.textContaining('1–16 ASCII'), findsNothing);
       await enterText('callingAe', 'TEST_CLIENT');
       await enterText('listenPort', '11113');
-      final appearance = find.byType(DropdownButtonFormField<Appearance>);
+      final appearance = find.byType(SegmentedButton<Appearance>);
       await tester.ensureVisible(appearance);
       await tester.pumpAndSettle();
-      await tester.tap(appearance);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('light').last);
+      await tester.tap(find.text('Light'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Save settings'));
       await tester.pumpAndSettle();
@@ -153,7 +151,7 @@ void main() {
       expect(find.text('Mask values'), findsOneWidget);
       await tester.tap(find.text('Query'));
       await tester.pumpAndSettle();
-      expect(find.text('Query · live C-FIND'), findsOneWidget);
+      expect(find.text('Query criteria'), findsOneWidget);
       expect(
         find.textContaining('No query has run at this level'),
         findsOneWidget,

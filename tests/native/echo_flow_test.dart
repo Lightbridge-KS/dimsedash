@@ -102,7 +102,7 @@ void main() {
                 .revision;
         await tapVisible(find.text('View run'));
         await tapVisible(find.text('Back'));
-        expect(find.text('Query · live C-FIND'), findsOneWidget);
+        expect(find.text('Query criteria'), findsOneWidget);
         expect(
           (await runtime.configStore.load() as Success<AppConfiguration>)
               .value

@@ -37,6 +37,36 @@ class QuerySession extends ChangeNotifier {
   AppConfiguration? _configuration;
   FindEditor editor = FindEditor.filters;
   bool collapsed = false;
+  bool matchingHelpExpanded = false;
+  bool identifierHelpExpanded = false;
+  void setIdentifierHelpExpanded(bool value) {
+    identifierHelpExpanded = value;
+    notifyListeners();
+  }
+
+  void setMatchingHelpExpanded(bool value) {
+    matchingHelpExpanded = value;
+    notifyListeners();
+  }
+
+  String? get friendlyDateError {
+    if (dateError != null) return dateError;
+    final entry = draft.entry(FindKey.date);
+    if (!entry.enabled || entry.purpose == FindPurpose.returnKey) return null;
+    final from = dateText('From'), through = dateText('Through');
+    for (final text in [from, through]) {
+      if (text.isNotEmpty &&
+          (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(text) ||
+              !validQueryDate(text.replaceAll('-', '')))) {
+        return 'Use a valid date in YYYY-MM-DD format.';
+      }
+    }
+    if (from.isNotEmpty && through.isNotEmpty && from.compareTo(through) > 0) {
+      return 'From must not be later than Through.';
+    }
+    return null;
+  }
+
   double scrollOffset = 0;
   int page = 0;
   final dateInputs = <String, String>{};

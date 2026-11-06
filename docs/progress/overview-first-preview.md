@@ -16,6 +16,16 @@ This is the durable implementation plan and status record. Architecture remains 
 
 ## Now / Next
 
+**Advanced Identifier presentation:** [compact editor](advanced-identifier-ui.md)
+implements the approved table/stacked common-key editor.
+
+**Settings presentation:** [General/theme refinement](settings-ui-refinement.md)
+separates theme selection from DICOM settings and preserves explicit saving.
+
+**Active presentation refinement:** [Query UI refinement](query-ui-refinement.md)
+implements Material tabs/date pickers and adaptive criteria groups. Results-table
+work remains deferred.
+
 **S2A PR delivery (2026-11-05):** [S2A real Query](s2-query.md) replaces
 synthetic execution with Study Root C-FIND. The upstream contract has merged and
 all public dependency refs now pin its merge commit. Body part is optional.

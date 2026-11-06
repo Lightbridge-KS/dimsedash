@@ -2,6 +2,7 @@ import 'package:dimsedash_core/dimsedash_core.dart';
 import 'package:flutter/material.dart';
 
 import 'node_fields.dart';
+import 'workbench_tabs.dart';
 
 enum WorkbenchOperation { echo, query }
 
@@ -48,8 +49,21 @@ class WorkbenchHeader extends StatelessWidget {
             if (node != null) NodeEnvironmentBadge(node.environment),
           ],
         ),
-        if (node != null) Text('${node.calledAe} · ${node.host}:${node.port}'),
-        Text('Calling AE · ${config.client.callingAe}'),
+        const SizedBox(height: 8),
+        DefaultTextStyle.merge(
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+          child: Wrap(
+            spacing: 24,
+            runSpacing: 4,
+            children: [
+              if (node != null)
+                Text('${node.calledAe} · ${node.host}:${node.port}'),
+              Text('Calling AE · ${config.client.callingAe}'),
+            ],
+          ),
+        ),
         ExpansionTile(
           key: PageStorageKey('connection-details-$nodeId'),
           tilePadding: EdgeInsets.zero,
@@ -66,23 +80,11 @@ class WorkbenchHeader extends StatelessWidget {
         if (operation != null)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: SegmentedButton<WorkbenchOperation>(
-                segments: const [
-                  ButtonSegment(
-                    value: WorkbenchOperation.echo,
-                    label: Text('Echo'),
-                  ),
-                  ButtonSegment(
-                    value: WorkbenchOperation.query,
-                    label: Text('Query'),
-                  ),
-                ],
-                selected: {operation!},
-                onSelectionChanged: (value) =>
-                    onOperationChanged?.call(value.single),
-              ),
+            child: WorkbenchTabs(
+              labels: const ['Echo', 'Query'],
+              index: operation!.index,
+              onChanged: (index) =>
+                  onOperationChanged?.call(WorkbenchOperation.values[index]),
             ),
           ),
       ],
