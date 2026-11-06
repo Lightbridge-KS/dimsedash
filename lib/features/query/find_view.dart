@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'find_field.dart';
+
 import 'package:dimsedash_core/dimsedash_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -82,65 +84,76 @@ class _FindViewState extends ConsumerState<FindView> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               widget.header,
-              const Text(
-                'Query · live C-FIND',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const Text(
-                'Run query sends the resolved Identifier to this node. Results stay in this session; history excludes datasets and matching values.',
-              ),
               Wrap(
                 spacing: 8,
                 children: [
                   for (final level in c.ancestors)
                     TextButton(
                       onPressed: () => c.backTo(level),
-                      child: Text(level.name.toUpperCase()),
+                      child: Text(findLevelLabel(level)),
                     ),
-                  Chip(label: Text(c.draft.level.name.toUpperCase())),
+                  Chip(label: Text(findLevelLabel(c.draft.level))),
                 ],
               ),
               if (c.parent != null)
                 const Text(
                   'Parent UIDs and query provenance are retained. Child results load only after Run query.',
                 ),
-              FindComposer(session: c, reveal: reveal),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: 220,
-                child: FindField(
-                  label: 'Retained row limit · 1–10,000',
-                  value: c.draft.rowLimit.toString(),
-                  onChanged: c.setLimit,
+              FindComposer(
+                session: c,
+                reveal: reveal,
+                footer: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text('Only Run query sends a request.'),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      spacing: 16,
+                      runSpacing: 12,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 220,
+                          child: FindField(
+                            label: 'Keep up to',
+                            value: c.draft.rowLimit.toString(),
+                            helper: 'results · 1–10,000 retained locally',
+                            onChanged: c.setLimit,
+                          ),
+                        ),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            FilledButton.icon(
+                              onPressed: c.busy ? null : () => c.run(config),
+                              icon: const Icon(Icons.search),
+                              label: const Text('Run query'),
+                            ),
+                            if (activeHere)
+                              OutlinedButton(
+                                onPressed: () {
+                                  if (c.runner?.state.summary?.id ==
+                                      result!.runId) {
+                                    c.runner?.stop();
+                                  }
+                                },
+                                child: const Text('Cancel query'),
+                              ),
+                            if (activeHere && elapsed != null)
+                              Text('Elapsed ${elapsed}s'),
+                            if (state.active && !activeHere)
+                              const Text(
+                                'Another outbound operation is active, including cleanup.',
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  FilledButton.icon(
-                    onPressed: c.busy ? null : () => c.run(config),
-                    icon: const Icon(Icons.search),
-                    label: const Text('Run query'),
-                  ),
-                  if (activeHere)
-                    OutlinedButton(
-                      onPressed: () {
-                        if (c.runner?.state.summary?.id == result!.runId) {
-                          c.runner?.stop();
-                        }
-                      },
-                      child: const Text('Cancel query'),
-                    ),
-                  if (activeHere && elapsed != null)
-                    Text('Elapsed ${elapsed}s'),
-                  if (state.active && !activeHere)
-                    const Text(
-                      'Another outbound operation is active, including cleanup.',
-                    ),
-                ],
               ),
               if (c.error ?? c.dateError ?? c.draft.validation
                   case final String message)

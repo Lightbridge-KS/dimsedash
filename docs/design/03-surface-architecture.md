@@ -395,6 +395,12 @@ without a redundant write. Add and Duplicate are unsaved drafts, whose successfu
 save creates/selects an ID and opens Workbench. Edit preserves ID/revision and
 selection; errors retain values with explicit reload/discard recovery. Removal
 requires confirmation and clears selection without deleting history or evidence.
+Settings begins with a General card containing a labeled System/Light/Dark
+segmented theme selector with icons. A separate Local DICOM settings card holds
+client identity and timeouts. Page-wide Save settings / Discard edits follow both
+cards; selecting a theme changes only the draft until Save. Narrow layouts stack
+the theme segments vertically with labels retained.
+
 Settings saves global client settings only, with whole-second timeouts and
 discard-on-navigation behavior. Remote fields are edited in Nodes only.
 
@@ -421,3 +427,41 @@ Timeline, Negotiation and typed Trace distinguish missing observations, numeric
 codes, local intent, protocol response, cleanup failure and omitted detail.
 Suggestions are labeled separately from observed facts. Echo success explicitly
 proves only the Verification exchange. Full historical browsing remains S7.
+
+## Query composer refinement (2026-11-05)
+
+The real Query composer follows the full-width reference with primary Echo/Query
+and secondary Filters/Advanced Identifier/Resolved Identifier Material tabs.
+A 320-logical-pixel minimum group width, increased with text scaling, determines
+three/two/one-column layout. Patient identity occupies the first row; the grouped
+date period, modality and optional body part occupy the second at wide widths.
+Labels remain visible, tag hints identify keys, and Return only/Omitted states
+remain explicit. Modality suggestions do not restrict literal custom values.
+
+Independent built-in Material From/Through pickers supplement ISO date text.
+Dates start blank, support either open end, and retain invalid input with inline
+errors. Cancelling a picker changes nothing. No dependency or wire-format change
+is introduced. A compact footer retains the local result limit and Run/Cancel
+controls even when criteria are collapsed. Matching/privacy detail lives in an
+accessible disclosure; storage and execution warnings remain visible.
+
+Results cards, pagination, selection and evidence are unchanged. See the
+[refinement tracker](../progress/query-ui-refinement.md) for verification.
+
+## Advanced Identifier common-key editor
+
+The Advanced Identifier panel presents the canonical QuerySession draft through
+`FindIdentifierEditor`. A four-column table groups Include, DICOM attribute,
+Purpose and Value; narrow layouts stack the same controls. Stable control keys
+preserve caret and focus during layout changes and runtime notifications.
+Required level/parent/identity rows are locked, fixed return fields are labeled
+Added by app, and generated character-set declarations are Automatic. Editable
+rows use explicit inclusion and Match/Return only intent. Saved values remain
+read-only until included and set to Match. Return only sends empty values;
+omitted keys are absent. Masking applies to both saved and editable sensitive
+values and locked UIDs. Body part at STUDY is separate next-series criteria.
+
+The editor delegates changes to the session; it owns no operation or durable
+state. Invalid friendly-date text survives tab navigation. Inline empty-match
+and date errors supplement existing authoritative validation at Run. The full
+structured editor remains S2B. See the [refinement tracker](../progress/advanced-identifier-ui.md).

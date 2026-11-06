@@ -88,6 +88,11 @@ across node, Settings and future query surfaces.
 ## Components
 
 The {components.primary-button} marks explicit Save settings or Save node; Discard is secondary.
+Settings places a General card first, with labeled System/Light/Dark icon
+segments. Segments stack vertically at narrow widths or increased text scale.
+Local DICOM settings occupy a separate card. Save settings and Discard edits sit
+below both cards and apply to the whole draft; theme selection has no immediate
+preview or persistence.
 The {components.card} groups related settings. Every input has a persistent label
 and validation message. Node cards show label, called AE, endpoint, environment
 and a distinct Selected marker, with a separate action menu. List density, local
@@ -107,6 +112,24 @@ from the frozen executed target. Unimplemented workflows show an honest explanat
 Approved Option A places the full-width query composer above results inside the
 node workbench, with Echo / Query switching under the shared node header. Filters,
 Advanced Identifier and Resolved Identifier share a draft; Collapse is explicit.
+Primary Echo/Query and secondary composer navigation use underlined Material tabs.
+Query criteria groups use three columns at wide widths, then two or one according
+to available width and text scale. Date, modality and body-part groups share an
+above-input heading and equal input padding; From/Through retain their sublabels.
+Helper text and errors grow below the aligned input borders. Persistent labels, tag references and concise
+Return only/Omitted states distinguish editing intent. Independent Material date
+pickers supplement ISO date entry; optional/open-ended ranges remain supported.
+Advanced Identifier uses a Query-specific four-column Table (Include, DICOM
+attribute, Purpose, Value), adapting to stacked rows when scaled minimum widths
+do not fit. Friendly attribute names lead; numeric tags, VR and dictionary names
+remain visible beneath. Required and app-added rows are read-only. Return-only
+and omitted keys show saved values as read-only and explicitly not sent; only
+included Match values are editable. STUDY body part is separated as next-series
+criteria. Headers, separators and padding use theme tokens. No row selection,
+sorting or arbitrary-tag controls are implied.
+The compact card footer owns the result limit and explicit Run/Cancel actions.
+Detailed matching/privacy help is collapsed; errors and frozen-evidence mismatch
+remain visible. Results presentation is unchanged by this refinement.
 At narrow widths fields stack and tables scroll horizontally within their panel.
 
 Normal Query is **live C-FIND**. Use explicit Run query / Cancel query controls,

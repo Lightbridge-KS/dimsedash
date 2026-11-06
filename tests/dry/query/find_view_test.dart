@@ -140,7 +140,7 @@ void main() {
               .hasFocus,
           isTrue,
         );
-        await tap(t, find.text('STUDY'));
+        await tap(t, find.text('Studies'));
         expect(c.result!.rows, hasLength(1));
         expect(find.text('Latest Query · Synthetic archive'), findsOneWidget);
         final parentRunId = c.runId;

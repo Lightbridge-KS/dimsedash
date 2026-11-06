@@ -96,7 +96,28 @@ void main() {
         );
         final patient = find.widgetWithText(TextField, 'Patient ID');
         await tap(patient);
-        await tester.enterText(patient, 'SYNTH-1');
+        await tester.enterText(patient, 'SYNTH-OTHER');
+        await tester.pumpAndSettle();
+        expect(session().draft.entry(FindKey.patientId).value, 'SYNTH-OTHER');
+        await tap(find.text('Advanced Identifier'));
+        expect(session().editor, FindEditor.advanced);
+        expect(
+          session().draft.entry(FindKey.patientId).purpose,
+          FindPurpose.match,
+        );
+        final advancedPatient = find.widgetWithText(
+          TextField,
+          'Patient ID value',
+        );
+        await tap(advancedPatient);
+        await tester.enterText(advancedPatient, 'SYNTH-1');
+        await tester.pumpAndSettle();
+        expect(runtime!.runner!.state.summary, isNull);
+        await tap(find.text('Resolved Identifier'));
+        expect(session().draft.entry(FindKey.patientId).value, 'SYNTH-1');
+        expect(find.textContaining('(0010,0020)'), findsOneWidget);
+        await tap(find.text('Filters'));
+        expect(tester.widget<TextField>(patient).controller!.text, 'SYNTH-1');
         await tester.pumpAndSettle();
         await tap(find.text('Collapse'));
         await run();
@@ -130,7 +151,7 @@ void main() {
         await tap(find.text('Back to results'));
         expect(session().selected, isNotNull);
         final last = runtime!.runner!.state.summary!.id;
-        await tap(find.text('STUDY'));
+        await tap(find.text('Studies'));
         expect(session().result!.request.identifier.level, FindLevel.study);
         expect(find.text('View run'), findsOneWidget);
         await tap(find.text('View run'));
