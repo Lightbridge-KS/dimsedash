@@ -23,7 +23,7 @@ Results-table changes and manual desktop acceptance remain deferred.
 - [x] Run dry and native configuration/Echo/Query gates.
 - [x] Capture synthetic macOS review screenshots.
 
-Changes remain uncommitted for review.
+Implementation `40c8908` merged in PR #2 at `08c72f0`; see delivery below.
 
 ## Verification — 2026-11-05
 
@@ -67,3 +67,18 @@ natural heading spacing without adding alignment-only spacers.
   22 core tests, analysis, architecture/design/secrets/dependency checks and macOS
   release build. Earlier native receipts and screenshots above predate this
   alignment adjustment; native service flows were not repeated for this layout-only change.
+
+## Landed delivery — 2026-11-06
+
+Implementation `40c8908` merged through
+[PR #2](https://github.com/Lightbridge-KS/dimsedash/pull/2) at `08c72f0`.
+The final pre-push dry gate passed with 143 Flutter and 22 core tests, analysis,
+architecture/design/secrets/dependency checks and a macOS release build.
+Commit hooks and reproducibility review passed.
+[Hosted dry gates](https://github.com/Lightbridge-KS/dimsedash/actions/runs/42140287933)
+passed on macOS 15 and Ubuntu 24.04, verified during this reconciliation.
+
+The earlier uncommitted receipts above describe their original verification
+checkpoints. Hosted Linux dry checks do not establish native GNOME acceptance.
+Results-table work, complete S2B authoring and manual desktop acceptance remain
+pending. No application code changed in this reconciliation.

@@ -11,8 +11,9 @@ Parent: [first-preview tracker](overview-first-preview.md).
 
 ## Now / Next
 
-S2A code is implemented for local review (2026-11-04). Real Study Root Query
-replaces normal-app synthetic execution. The upstream Find contract has since merged; application PR delivery is in progress.
+S2A merged in PR #1 at `3a2ccd1`. Real Study Root Query replaces normal-app
+synthetic execution. The upstream Find contract is merged and publicly pinned.
+Query/Settings/editor refinements subsequently merged in PR #2 at `08c72f0`.
 Release publication and desktop acceptance remain separate steps. Previous [Query preview](query-ui-preview.md) and
 [refactoring](../archive/refactor/refactor-query.md) receipts remain historical evidence.
 
@@ -135,3 +136,18 @@ hosted CI and a fresh clone of the final commit remain separate checks.
 Design assets now separate native screenshots under
 `docs/design/assets/dimsedash-screenshots/s2a/` from historical HTML/PNG mockups
 under `docs/design/assets/mockup/`. Earlier refactor receipts are archived.
+
+## Landed delivery reconciliation — 2026-11-06
+
+[PR #1](https://github.com/Lightbridge-KS/dimsedash/pull/1) merged at `3a2ccd1`.
+Its [hosted dry gates](https://github.com/Lightbridge-KS/dimsedash/actions/runs/41887991186)
+passed on macOS 15 and Ubuntu 24.04. The merge and checks were verified from
+GitHub during reconciliation. Earlier source-snapshot and local receipts retain
+their original scope; a fresh clone of the final commit has not been recorded.
+
+Presentation implementation `40c8908` merged in
+[PR #2](https://github.com/Lightbridge-KS/dimsedash/pull/2) at `08c72f0`.
+Its [hosted dry gates](https://github.com/Lightbridge-KS/dimsedash/actions/runs/42140287933)
+also passed on both platforms. This includes common-key editor refinement, not
+S2B arbitrary-tag/private-creator/sequence authoring. Upstream release publication,
+production retrieval and deferred desktop acceptance remain pending.

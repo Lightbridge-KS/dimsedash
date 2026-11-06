@@ -25,7 +25,7 @@ stack the segments vertically while retaining labels.
 - [x] Update widget/native selectors and cover draft-only selection and discard.
 - [x] Complete dry and native configuration checks.
 
-Changes remain uncommitted. Manual desktop acceptance remains pending.
+Implementation `40c8908` merged in PR #2 at `08c72f0`. Manual desktop acceptance remains pending.
 
 ## Verification — 2026-11-05
 
@@ -42,4 +42,19 @@ Uncommitted changes on base `3a2ccd1`, including the preceding Query refinements
   not a new visual acceptance receipt.
 - No new dependencies, database changes or networking behavior changes.
 
-Full manual macOS/Ubuntu GNOME acceptance remains pending. No commit or push.
+Full manual macOS/Ubuntu GNOME acceptance remains pending.
+
+## Landed delivery — 2026-11-06
+
+Implementation `40c8908` merged through
+[PR #2](https://github.com/Lightbridge-KS/dimsedash/pull/2) at `08c72f0`.
+The final pre-push dry gate passed with 143 Flutter and 22 core tests, analysis,
+architecture/design/secrets/dependency checks and a macOS release build.
+Commit hooks and reproducibility review passed.
+[Hosted dry gates](https://github.com/Lightbridge-KS/dimsedash/actions/runs/42140287933)
+passed on macOS 15 and Ubuntu 24.04, verified during this reconciliation.
+
+The earlier uncommitted receipts above describe their original verification
+checkpoints. Hosted Linux dry checks do not establish native GNOME acceptance.
+Results-table work, complete S2B authoring and manual desktop acceptance remain
+pending. No application code changed in this reconciliation.

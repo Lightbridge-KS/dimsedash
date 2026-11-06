@@ -1,5 +1,5 @@
 ---
-summary: First-preview implementation plan and durable vertical-slice tracker for DimseDash; approved design baseline, dependencies, acceptance gates, upstream readiness, evidence ledger and remaining release decisions. S1 is landed at 40b1563 with clean-clone and hosted macOS/Linux CI verification; manual desktop acceptance remains pending.
+summary: First-preview implementation plan and durable vertical-slice tracker for DimseDash; approved design baseline, dependencies, acceptance gates, upstream readiness, evidence ledger and remaining release decisions. S2A and UI refinements landed through PR #2; hosted macOS/Linux dry gates passed; S2B and manual desktop acceptance remain pending.
 read_when:
   - starting or resuming DimseDash implementation
   - choosing the next vertical slice or recording completion evidence
@@ -8,7 +8,7 @@ read_when:
 
 # DimseDash — First-preview implementation tracker
 
-> Created: 2026-10-19 · Status: implementation sequence and design baseline approved; platform baseline approved · Implementation: S1 landed with clean-clone and hosted CI verification; manual desktop acceptance pending
+> Created: 2026-10-19 · Status: implementation sequence and design baseline approved; platform baseline approved · Implementation: S2A and UI refinements landed; S2B and manual desktop acceptance pending
 >
 > Inputs: [PRD](../req/dimsedash-prd.md) · [System](../design/01-system-architecture.md) · [Data](../design/02-data-architecture.md) · [Surface](../design/03-surface-architecture.md) · [Codebase blueprint](../structure/01-codebase-blueprint.md)
 
@@ -16,23 +16,23 @@ This is the durable implementation plan and status record. Architecture remains 
 
 ## Now / Next
 
-**Advanced Identifier presentation:** [compact editor](advanced-identifier-ui.md)
-implements the approved table/stacked common-key editor.
+**Current implementation:** real Echo and Study Root C-FIND are landed. S2A
+merged in [PR #1](https://github.com/Lightbridge-KS/dimsedash/pull/1) at `3a2ccd1`.
+Query composer, Settings and Advanced Identifier presentation refinements merged
+in [PR #2](https://github.com/Lightbridge-KS/dimsedash/pull/2) at `08c72f0`
+(implementation `40c8908`). Hosted dry gates passed on macOS 15 and Ubuntu 24.04
+for both PRs; linked receipts are in the child trackers.
 
-**Settings presentation:** [General/theme refinement](settings-ui-refinement.md)
-separates theme selection from DICOM settings and preserves explicit saving.
+**Next:** results-table refinement remains deferred; S2B arbitrary-tag,
+private-creator and sequence authoring remains required before S2 closes.
+S3–S8 production receiving, retrieval, inspection, history and release work is
+not complete. No new implementation slice is activated by this reconciliation.
 
-**Active presentation refinement:** [Query UI refinement](query-ui-refinement.md)
-implements Material tabs/date pickers and adaptive criteria groups. Results-table
-work remains deferred.
-
-**S2A PR delivery (2026-11-05):** [S2A real Query](s2-query.md) replaces
-synthetic execution with Study Root C-FIND. The upstream contract has merged and
-all public dependency refs now pin its merge commit. Body part is optional.
-S2B complete Identifier editing and all deferred native acceptance remain pending.
-Verification and remaining delivery gates are recorded in the S2 tracker.
-
-**Now:** the S0–S8 sequence and Study Root-only preview scope are approved (2026-10-19). The platform/distribution baseline is approved (2026-10-19). The Settings simplification is approved (2026-10-20): global local identity/listen port/timeouts/appearance belong to Settings, remote fields to Nodes; `DIMSE_DASH` remains the default local AE. S1 is landed on `main` at `40b1563`, using published upstream `v0.1.0-dev.2`. A fresh remote clone passed the macOS dry/live/native/release matrix and stayed clean; hosted macOS 15 and Ubuntu 24.04 dry gates passed on the implementation commit. Manual desktop acceptance, including the deferred S0 checks, remains pending.
+**Landed presentation receipts:** [Query composer](query-ui-refinement.md),
+[Settings General/theme](settings-ui-refinement.md), and
+[compact Advanced Identifier](advanced-identifier-ui.md).
+[S2A](s2-query.md) records real-query verification and remaining delivery checks.
+The approved platform baseline remains macOS 15 arm64 and Ubuntu 24.04 amd64.
 
 **S0 acceptance pending:** S0 — shell, persistent Settings, failure handling and executable gates are implemented. Automated UI/SQLite checks pass on macOS and Ubuntu 24.04 under Xvfb. Remaining native acceptance is pending and deferred for now (2026-10-19): real-keyboard/process-restart acceptance on macOS and stock Ubuntu 24.04 GNOME Wayland/Xorg acceptance. The support baseline is unchanged. See [S0 evidence/runbook](../tests/s0-configuration.md). S1 now provides Echo as the first real network tracer bullet; Echo alone is not a public-preview release.
 
@@ -46,7 +46,7 @@ Global saves preserve node rows/revisions/selection. Local dry gates (76 Flutter
 commit hooks passed; hosted CI for this refinement is not yet verified. Manual
 desktop acceptance stays pending.
 
-**Current evidence:** [S1 — node management and Echo](s1-echo.md) records implementation `40b1563`, committed-clone checks, hosted CI and remaining manual acceptance. All DICOM refs target `v0.1.0-dev.2` at `53ee5ec9c204e58382bf9235a621eb05af8d4179`. S2A paired implementation and the earlier Query/Retrieve presentation checkpoints are tracked separately below.
+**Dependency evidence:** [S1](s1-echo.md) preserves its released dev.2 receipts. Current public Git dependencies pin the upstream Find merge `32f0f90f4cd36cb643663c23b2b47943c9b0f7c5`; see [S2A public dependency delivery](s2-query.md#public-dependency-delivery-2026-11-05). Earlier synthetic Query/Retrieve checkpoints remain historical, not production retrieval evidence.
 
 **Preview finish line:** configure → Find → select one study/series/instance → review exact Identifier → C-GET or C-MOVE → receive/save → inspect headers and a supported thumbnail → inspect/export truthful evidence. The complete workflow must run in packaged macOS and Linux apps with failure, retention and restart behavior verified.
 
@@ -95,7 +95,7 @@ Evidence: [Flutter platform matrix](https://docs.flutter.dev/reference/supported
 |---|---|---|---|---|
 | S0 | Launch, configure and reopen | Initial platform baseline | R-01, R-15, R-17, R-18 | In progress |
 | S1 | Manage nodes and diagnose an Echo exchange | S0; U1 observations | R-01, R-02, R-11–R-13, R-15 | S1 landed; navigation and Settings refinements committed in `80ede60` |
-| S2 | Find and inspect an exact study/series/instance subset | S1; U2 Find terminal evidence | R-03, R-04, R-09, R-12, R-16, R-19 | S2A implemented for local review; S2B and delivery pending |
+| S2 | Find and inspect an exact study/series/instance subset | S1; U2 Find terminal evidence | R-03, R-04, R-09, R-12, R-16, R-19 | S2A landed at `3a2ccd1`; UI refinements at `08c72f0`; S2B and acceptance pending |
 | S3 | Independently receive and durably save DICOM objects | S1; U3 storage contract | R-07, R-08, R-12, R-15, R-16 | Not started |
 | S4 | Retrieve a reviewed target through C-GET | S2 + S3; U2 retrieve evidence | R-04, R-06, R-08, R-12, R-19 | Not started |
 | S5 | Retrieve through C-MOVE with honest callback correlation | S4; U3 originator/context evidence | R-05, R-07, R-08, R-11, R-12 | Not started |
@@ -255,7 +255,7 @@ This lane buys down library gaps alongside the first affected slice. It is not a
 | Item | Required public contract / evidence | Needed for | State |
 |---|---|---|---|
 | U1 | Structured association lifecycle, available transport milestones, negotiation and numeric reject/abort data; source/provenance without parsing formatted trace | S1 | Published in `v0.1.0-dev.2` at `53ee5ec`; consumed and verified by app commit `40b1563` |
-| U2 | Find final status, cancellation/abort distinction and retrieve counter presence; subscription cancellation completion is not cancellation proof | S2, S4 | Find contract implemented locally for S2A; upstream delivery and retrieve evidence pending |
+| U2 | Find final status, cancellation/abort distinction and retrieve counter presence; subscription cancellation completion is not cancellation proof | S2, S4 | Find contract merged upstream at `32f0f90` and consumed by S2A; upstream release publication and retrieve evidence pending |
 | U3 | Receipt/association context, originator fields and sink acknowledgement behavior; concurrent save failure propagation | S3, S5 | Contract verification and any upstream delta pending |
 | U4 | Public grayscale rendering and explicit unsupported-charset/codec behavior; packaged Flutter display on both platforms; current grayscale decoding is pure Dart | S2 headers, S6 pixels | App/platform verification pending |
 
@@ -275,7 +275,7 @@ When work lands upstream, record issue/PR, release or commit pin, contract tests
 |---|---|---|---|---|---|
 | S0 | `fdaf6d4`; refactor `15dba15`, native harness `b8dee94` | 52 local dry tests pass; hosted macOS 15 and Ubuntu 24.04 dry jobs pass at `da80283` | No DIMSE work in scope | macOS automated native flow + release smoke / Ubuntu 24.04 Xvfb flow; GNOME acceptance pending | In progress — [evidence and remaining checks](../tests/s0-configuration.md) |
 | S1 | `40b1563`; upstream `53ee5ec` | Clean-clone macOS full dry and hosted macOS 15/Ubuntu 24.04 CI passed; 52 Flutter + 22 core tests, Drift parity and release builds | 10 cases from committed macOS clone; identical-source Ubuntu snapshot also passed | macOS committed-clone native configuration/Echo + release probe / Ubuntu emulated Xvfb snapshot equivalents + release probe | Implementation and automated delivery verified; manual desktop acceptance pending — [evidence](s1-echo.md) |
-| S2A | PR candidate; upstream pinned at `32f0f90` | Local dry + Ubuntu 24.04 automated subset | 24 owned-loopback cases; scoped external catalog check | macOS configuration/Echo/Query; Linux desktop pending | Review checkpoint; [verification receipts](s2-query.md), S2B and delivery pending |
+| S2A | `3a2ccd1`; UI `40c8908` merged at `08c72f0`; upstream `32f0f90` | Local dry + Ubuntu automated subset; hosted macOS 15/Ubuntu 24.04 dry gates for PRs #1/#2 | 24 owned-loopback cases; scoped external catalog check | macOS configuration/Echo/Query; Linux desktop pending | Landed; [receipts](s2-query.md); S2B, final clean-clone verification and manual acceptance pending |
 | S3 | — | Not run | Not run | Not run / Not run | Pending |
 | S4 | — | Not run | Not run | Not run / Not run | Pending |
 | S5 | — | Not run | Not run | Not run / Not run | Pending |
