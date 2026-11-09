@@ -140,7 +140,11 @@ void main() {
         await tap(find.text('Collapse'));
         await run();
         expect(session().result!.rows.length, 1);
-        await tap(find.text('Select'));
+        await tap(find.byType(Radio<QueryMatch>).first);
+        expect(find.text('Selected instance · Result 1 · 1'), findsOneWidget);
+        await tap(find.text('Clear selection'));
+        expect(session().selected, isNull);
+        await tap(find.byType(Radio<QueryMatch>).first);
         await tap(find.text('Review retrieve'));
         expect(find.text('Scope: this instance only'), findsOneWidget);
         expect(
@@ -151,7 +155,7 @@ void main() {
         await tap(find.text('Back to results'));
         expect(session().selected, isNotNull);
         final last = runtime!.runner!.state.summary!.id;
-        await tap(find.text('Studies'));
+        await tap(find.widgetWithText(TextButton, 'Studies'));
         expect(session().result!.request.identifier.level, FindLevel.study);
         expect(find.text('View run'), findsOneWidget);
         await tap(find.text('View run'));

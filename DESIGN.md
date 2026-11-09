@@ -129,8 +129,15 @@ criteria. Headers, separators and padding use theme tokens. No row selection,
 sorting or arbitrary-tag controls are implied.
 The compact card footer owns the result limit and explicit Run/Cancel actions.
 Detailed matching/privacy help is collapsed; errors and frozen-evidence mismatch
-remain visible. Results presentation is unchanged by this refinement.
-At narrow widths fields stack and tables scroll horizontally within their panel.
+remain visible. Results use a themed table at wide widths and compact stacked rows when scaled
+minimum widths do not fit. Shared cells group study/patient, date/modalities and
+accession/count information; series and instance levels use their own columns.
+Radio controls select one target; Inspect and Open child remain separate actions.
+The selection footer names the scope and retains selection across local pages.
+Status, incomplete outcomes and cleanup warnings remain distinct. No automatic
+sorting, selection or criteria collapse. See
+[results refinement](docs/progress/query-results-refinement.md).
+At narrow widths Query fields and result rows stack without horizontal scrolling.
 
 Normal Query is **live C-FIND**. Use explicit Run query / Cancel query controls,
 received/retained counts and local pages of 50 rows. Never insert wildcards, select

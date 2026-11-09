@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'find_field.dart';
+import 'find_results_panel.dart';
 
-import 'package:dimsedash_core/dimsedash_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -170,72 +170,34 @@ class _FindViewState extends ConsumerState<FindView> {
                 const Text(
                   'History unavailable. Further starts require storage recovery.',
                 ),
-              if (result == null)
-                const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text(
-                    'No query has run at this level. Enter optional criteria, review the Identifier, then Run query.',
-                  ),
-                )
-              else ...[
-                const SizedBox(height: 20),
-                Text(
-                  findResultLabel(result),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                Text(
-                  'Received ${result.received} · retained ${result.rows.length}. 50 rows per local page; no server pagination.',
-                ),
-                if (c.dirty || result.request.settingsDiffer(config))
-                  const Text(
+              FindResultsPanel(
+                level: c.draft.level,
+                result: result,
+                selected: c.selected,
+                page: c.page,
+                reveal: reveal,
+                warnings: [
+                  if (result != null &&
+                      (c.dirty || result.request.settingsDiffer(config)))
                     'Criteria or connection settings changed. Results and evidence retain the executed settings; edits apply to the next run.',
-                  ),
-                if (c.stale)
-                  const Text(
-                    'Connection identity changed. Selection and child continuation are disabled until this query is rerun.',
-                  ),
-                if (result.outcome?.optionalKeysUnsupported ?? false)
-                  const Text(
-                    'Optional-key warning (0xFF01): the peer may not have supported every requested key.',
-                  ),
-                if (result.rows.isEmpty && !result.active)
-                  const Text('No retained matches.'),
-                for (final row in result.rows.skip(c.page * 50).take(50))
-                  _row(context, row, result, reveal),
-                if (result.rows.length > 50)
-                  Wrap(
-                    spacing: 12,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      TextButton(
-                        onPressed: c.page > 0
-                            ? () => c.setPage(c.page - 1)
-                            : null,
-                        child: const Text('Previous page'),
+                  if (c.stale) 'Connection identity changed. Selection and child continuation are disabled until this query is rerun.',
+                  if (result?.outcome?.optionalKeysUnsupported ?? false) 'Optional-key warning (0xFF01): the peer may not have supported every requested key.',
+                ],
+                actionProblem: c.actionProblem,
+                onSelect: c.select,
+                onClear: c.clearSelection,
+                onPage: c.setPage,
+                onInspect: (row) =>
+                    inspectQueryMatch(context, row, reveal, c.parent),
+                onOpenChild: c.openChild,
+                retrieveFocus: widget.retrieveFocus,
+                onRetrieve: c.selected == null || c.stale || result == null
+                    ? null
+                    : () => widget.onRetrieve(
+                        QuerySelection(result, c.selected!),
                       ),
-                      Text(
-                        'Page ${c.page + 1} of ${(result.rows.length / 50).ceil()}',
-                      ),
-                      TextButton(
-                        onPressed: (c.page + 1) * 50 < result.rows.length
-                            ? () => c.setPage(c.page + 1)
-                            : null,
-                        child: const Text('Next page'),
-                      ),
-                    ],
-                  ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: FilledButton.tonal(
-                    focusNode: widget.retrieveFocus,
-                    onPressed: c.selected == null || c.stale
-                        ? null
-                        : () => widget.onRetrieve(
-                            QuerySelection(result, c.selected!),
-                          ),
-                    child: const Text('Review retrieve'),
-                  ),
-                ),
+              ),
+              if (result != null) ...[
                 ExpansionTile(
                   key: PageStorageKey('query-evidence-${result.runId}'),
                   title: const Text('Query evidence · frozen'),
@@ -252,82 +214,6 @@ class _FindViewState extends ConsumerState<FindView> {
           ),
         );
       },
-    );
-  }
-
-  Widget _row(
-    BuildContext context,
-    QueryMatch row,
-    QueryResultContext result,
-    bool reveal,
-  ) {
-    final c = widget.session, level = result.request.identifier.level;
-    final problem = c.actionProblem(row);
-    final description = level == FindLevel.study
-        ? 0x00081030
-        : level == FindLevel.series
-        ? 0x0008103E
-        : 0x00200013;
-    String value(int tag, {bool sensitive = false}) =>
-        queryValue(row, tag, reveal, sensitive: sensitive);
-    return Card.outlined(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              '${row.ordinal}. ${value(description, sensitive: level != FindLevel.image)}',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            if (level == FindLevel.study) ...[
-              Text(
-                'Patient ${value(0x00100010, sensitive: true)} · ID ${value(0x00100020, sensitive: true)}',
-              ),
-              Text(
-                'Study date ${value(0x00080020)} · modality ${value(0x00080061)} · accession ${value(0x00080050, sensitive: true)}',
-              ),
-              Text('Returned series count: ${value(0x00201206)}'),
-            ],
-            if (level == FindLevel.series)
-              Text(
-                'Modality ${value(0x00080060)} · body part ${value(0x00180015)} · returned instance count ${value(0x00201209)}',
-              ),
-            if (problem != null) Text(problem),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                TextButton(
-                  onPressed: () =>
-                      inspectQueryMatch(context, row, reveal, c.parent),
-                  child: const Text('Inspect'),
-                ),
-                if (level != FindLevel.image)
-                  TextButton(
-                    onPressed: problem == null ? () => c.openChild(row) : null,
-                    child: Text(
-                      level == FindLevel.study
-                          ? 'Open series'
-                          : 'Open instances',
-                    ),
-                  ),
-                TextButton.icon(
-                  onPressed: problem == null ? () => c.select(row) : null,
-                  icon: Icon(
-                    identical(c.selected, row)
-                        ? Icons.radio_button_checked
-                        : Icons.radio_button_unchecked,
-                  ),
-                  label: Text(
-                    identical(c.selected, row) ? 'Selected' : 'Select',
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

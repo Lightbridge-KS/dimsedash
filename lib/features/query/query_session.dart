@@ -238,6 +238,11 @@ class QuerySession extends ChangeNotifier {
   String? actionProblem(QueryMatch row) => stale
       ? 'Connection identity changed. Run this query again.'
       : row.targetProblem(result!.request.identifier);
+  void clearSelection() {
+    selected = null;
+    notifyListeners();
+  }
+
   void select(QueryMatch row) {
     if (result?.rows.contains(row) != true || actionProblem(row) != null) {
       return;
