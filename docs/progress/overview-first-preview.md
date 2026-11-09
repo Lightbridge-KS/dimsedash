@@ -23,7 +23,7 @@ in [PR #2](https://github.com/Lightbridge-KS/dimsedash/pull/2) at `08c72f0`
 (implementation `40c8908`). Hosted dry gates passed on macOS 15 and Ubuntu 24.04
 for both PRs; linked receipts are in the child trackers.
 
-**Next:** results-table refinement remains deferred; S2B arbitrary-tag,
+**Active:** [Query results refinement](query-results-refinement.md) implements approved Option A. S2B arbitrary-tag,
 private-creator and sequence authoring remains required before S2 closes.
 S3–S8 production receiving, retrieval, inspection, history and release work is
 not complete. No new implementation slice is activated by this reconciliation.

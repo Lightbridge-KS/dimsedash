@@ -120,7 +120,7 @@ void main() {
         gateway.finds.last.match(row(series: '2.25.2', sop: '2.25.3'));
         gateway.finds.last.finish();
         await t.pumpAndSettle();
-        await tap(t, find.text('Select'));
+        await tap(t, find.byType(Radio<QueryMatch>).first);
         await tap(t, find.text('Review retrieve'));
         expect(find.text('Scope: this instance only'), findsOneWidget);
         expect(
@@ -140,7 +140,7 @@ void main() {
               .hasFocus,
           isTrue,
         );
-        await tap(t, find.text('Studies'));
+        await tap(t, find.widgetWithText(TextButton, 'Studies'));
         expect(c.result!.rows, hasLength(1));
         expect(find.text('Latest Query · Synthetic archive'), findsOneWidget);
         final parentRunId = c.runId;

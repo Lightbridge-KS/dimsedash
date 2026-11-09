@@ -465,3 +465,20 @@ The editor delegates changes to the session; it owns no operation or durable
 state. Invalid friendly-date text survives tab navigation. Inline empty-match
 and date errors supplement existing authoritative validation at Run. The full
 structured editor remains S2B. See the [refinement tracker](../progress/advanced-identifier-ui.md).
+
+## Query results presentation refinement
+
+Results use a feature-specific table/stacked panel with local pages of 50 in
+arrival order. Adaptive cells show level-specific returned metadata; missing,
+empty and decode-limited values remain distinct. Valid full dates display as ISO
+dates without changing raw inspection values. Select radios, Inspect and Open
+series/instances are independent controls. Opening children prepares a query;
+paging and selection send no requests.
+
+The footer identifies one selected target and its exact retrieval scope. Selection
+survives local page changes; Show selected returns to its page. Clear selection
+changes only session state. Stale or invalid identities remain inspectable but
+cannot continue or become retrieval targets. Current results retain their frozen
+request despite draft edits. Outcome, completeness and cleanup failures remain
+separate. No per-node history, sorting, local filtering or production retrieval
+is introduced. See [implementation evidence](../progress/query-results-refinement.md).
